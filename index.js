@@ -8,25 +8,23 @@ var parse = require("css-what"),
 var filters = {
     __proto__: null,
     first: function(elems){
-        return elems.length > 0 [elems[0]];
+        return elems.length > 0 && [elems[0]];
     },
     last: function(elems){
         return elems.length > 0 && [elems[elems.length - 1]];
     },
     eq: function(elems, data){
         var num = parseInt(data, 10);
-        if(!isFinite(num) || Math.abs(num) >= elems.length) return;
-        return [num < 0 ? elems[elems.length - num] : elems[num]];
+        return isFinite(num) && Math.abs(num) < elems.length &&
+            [num < 0 ? elems[elems.length - num] : elems[num]];
     },
     gt: function(elems, data){
         var num = parseInt(data, 10);
-        if(!isFinite(num)) return;
-        return elems.slice(num);
+        return isFinite(num) && elems.slice(num);
     },
     lt: function(elems, data){
         var num = parseInt(data, 10);
-        if(!isFinite(num)) return;
-        return elems.slice(0, num);
+        return isFinite(num) && elems.slice(0, num);
     },
     even: function(elems){
         return elems.filter(function(n, i){ return i % 2 === 0; });
