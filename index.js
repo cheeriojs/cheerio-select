@@ -38,8 +38,6 @@ function isFilter(s){
     return s.type === "pseudo" && s.name in filters;
 }
 
-var arrPush = Array.prototype.push;
-
 module.exports = function(root, selector, options){
     var sel = parse(selector);
     var results = [], newElems;
