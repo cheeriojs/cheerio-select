@@ -2,12 +2,37 @@ import { parse, Selector, PseudoSelector } from "css-what";
 import {
     _compileToken as compile,
     Options as CSSSelectOptions,
+    appendNextSiblings,
 } from "css-select";
-import { find, getChildren, removeSubsets, uniqueSort } from "domutils";
+import * as DomUtils from "domutils";
 import type { Element, Node } from "domhandler";
 
-type Filter = "first" | "last" | "eq" | "gt" | "lt" | "even" | "odd";
-const filterNames = new Set(["first", "last", "eq", "gt", "lt", "even", "odd"]);
+type Filter =
+    | "first"
+    | "last"
+    | "eq"
+    | "nth"
+    | "gt"
+    | "lt"
+    | "even"
+    | "odd"
+    | "not";
+const filterNames = new Set([
+    "first",
+    "last",
+    "eq",
+    "gt",
+    "nth",
+    "lt",
+    "even",
+    "odd",
+]);
+
+const SCOPE_PSEUDO: PseudoSelector = {
+    type: "pseudo",
+    name: "scope",
+    data: null,
+};
 
 interface CheerioSelector extends PseudoSelector {
     name: Filter;
@@ -21,11 +46,13 @@ function getLimit(filter: Filter, data: string | null) {
     switch (filter) {
         case "first":
             return 1;
+        case "nth":
         case "eq":
+            return isFinite(num) ? (num >= 0 ? num + 1 : Infinity) : 0;
         case "lt":
-            return isFinite(num) ? num + 1 : 0;
+            return isFinite(num) ? (num >= 0 ? num : Infinity) : 0;
         case "gt":
-            return isFinite(num) && num >= 0 ? Infinity : 0;
+            return isFinite(num) ? Infinity : 0;
         default:
             return Infinity;
     }
@@ -34,9 +61,10 @@ function getLimit(filter: Filter, data: string | null) {
 function filterElements(
     filter: string,
     elems: Node[],
-    data: string | null
+    data: Selector[][] | string | null,
+    options: Options
 ): Node[] {
-    const num = data != null ? parseInt(data, 10) : NaN;
+    const num = typeof data === "string" ? parseInt(data, 10) : NaN;
 
     switch (filter) {
         case "first":
@@ -45,29 +73,57 @@ function filterElements(
             return elems;
         case "last":
             return elems.length > 0 ? [elems[elems.length - 1]] : elems;
+        case "nth":
         case "eq":
+            console.log(
+                num,
+                elems.length,
+                // @ts-ignore
+                elems.map((e) => [e.name, e.attribs.id])
+            );
             return isFinite(num) && Math.abs(num) < elems.length
-                ? [num < 0 ? elems[elems.length - num] : elems[num]]
+                ? [num < 0 ? elems[elems.length + num] : elems[num]]
                 : [];
         case "gt":
-            return isFinite(num) ? elems.slice(num) : [];
+            return isFinite(num) ? elems.slice(num + 1) : [];
         case "even":
             return elems.filter((_, i) => i % 2 === 0);
         case "odd":
             return elems.filter((_, i) => i % 2 === 1);
+        case "not":
+            return filterNot(elems, data as Selector[][], options);
     }
 
     throw new Error("Did not check all cases");
 }
 
-function isFilter(s: Selector): s is CheerioSelector {
-    return s.type === "pseudo" && filterNames.has(s.name);
+function filterNot(elems: Node[], data: Selector[][], options: Options) {
+    const filtered = new Set(
+        data
+            .map((sel) =>
+                findFilterElements(elems, [SCOPE_PSEUDO, ...sel], options)
+            )
+            // TODO: Use flatMap here
+            .reduce((arr, rest) => [...arr, ...rest], [])
+    );
+
+    return elems.filter((e) => !filtered.has(e));
 }
 
-export default function select(
-    root: Node | Node[],
+function isFilter(s: Selector): s is CheerioSelector {
+    if (s.type !== "pseudo") return false;
+    if (filterNames.has(s.name)) return true;
+    if (s.name === "not" && Array.isArray(s.data)) {
+        return s.data.some((s) => s.some(isFilter));
+    }
+
+    return false;
+}
+
+export function select(
     selector: string,
-    options: Options
+    root: Node | Node[],
+    options: Options = {}
 ): Node[] {
     const sel = parse(selector);
     const results: Node[][] = [];
@@ -92,7 +148,7 @@ export default function select(
     }
 
     // Sort results, filtering for duplicates
-    return uniqueSort(results.reduce((a, b) => [...a, ...b]));
+    return DomUtils.uniqueSort(results.reduce((a, b) => [...a, ...b]));
 }
 
 function findFilterElements(
@@ -102,8 +158,7 @@ function findFilterElements(
 ): Node[] {
     const filterIndex = sel.findIndex(isFilter);
     const sub = sel.slice(0, filterIndex);
-    // @ts-expect-error `findIndex` is not smart enough here
-    const filter: CheerioSelector = sel[filterIndex];
+    const filter: CheerioSelector = sel[filterIndex] as CheerioSelector;
 
     /*
      * Set the number of elements to retrieve.
@@ -113,7 +168,7 @@ function findFilterElements(
 
     const elems = findElements(root, [sub], options, limit);
 
-    const result = filterElements(filter.name, elems, filter.data);
+    const result = filterElements(filter.name, elems, filter.data, options);
 
     if (!result.length || sel.length === filterIndex + 1) {
         return result;
@@ -122,7 +177,7 @@ function findFilterElements(
     const remainingSelector = sel.slice(filterIndex + 1);
 
     // Add a scope token in front of the remaining selector
-    remainingSelector.unshift({ type: "pseudo", name: "scope", data: null });
+    remainingSelector.unshift(SCOPE_PSEUDO);
 
     if (remainingSelector.some(isFilter)) {
         return findFilterElements(result, remainingSelector, options);
@@ -135,12 +190,27 @@ function findFilterElements(
 function findElements(
     root: Node | Node[],
     sel: Selector[][],
-    options: Options,
+    options: CSSSelectOptions<Node, Element>,
     limit: number
 ) {
     if (limit === 0) return [];
 
-    const cmp = compile(sel, options, root);
-    const elems = Array.isArray(root) ? removeSubsets(root) : getChildren(root);
-    return find(cmp, elems, true, limit);
+    // @ts-ignore
+    const query = compile<Node, Element>(sel, options, root);
+
+    if (query.shouldTestNextSiblings) {
+        // @ts-ignore
+        root = appendNextSiblings(root, DomUtils);
+    }
+
+    const elems = Array.isArray(root)
+        ? DomUtils.removeSubsets(root)
+        : DomUtils.getChildren(root);
+
+    return DomUtils.find(
+        (node: Node) => DomUtils.isTag(node) && query(node),
+        elems,
+        true,
+        limit
+    );
 }
