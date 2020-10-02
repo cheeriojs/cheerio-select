@@ -2,7 +2,7 @@ import { parse, Selector, PseudoSelector } from "css-what";
 import {
     _compileToken as compile,
     Options as CSSSelectOptions,
-    appendNextSiblings,
+    prepareContext,
 } from "css-select";
 import * as DomUtils from "domutils";
 import type { Element, Node } from "domhandler";
@@ -61,10 +61,10 @@ function getLimit(filter: Filter, data: string | null) {
 
 function filterElements(
     filter: string,
-    elems: Node[],
+    elems: Element[],
     data: Selector[][] | string | null,
     options: Options
-): Node[] {
+): Element[] {
     const num = typeof data === "string" ? parseInt(data, 10) : NaN;
 
     switch (filter) {
@@ -92,13 +92,13 @@ function filterElements(
     throw new Error("Did not check all cases");
 }
 
-function filterNot(elems: Node[], data: Selector[][], options: Options) {
+function filterNot(elems: Element[], data: Selector[][], options: Options) {
     const filtered = new Set(
         data
             .map((sel) =>
                 findFilterElements(elems, [SCOPE_PSEUDO, ...sel], options)
             )
-            // TODO: Use flatMap here
+            // TODO: Use flatMap
             .reduce((arr, rest) => [...arr, ...rest], [])
     );
 
@@ -117,7 +117,7 @@ function isFilter(s: Selector): s is CheerioSelector {
 
 export function select(
     selector: string,
-    root: Node | Node[],
+    root: Element | Element[],
     options: Options = {}
 ): Node[] {
     const sel = parse(selector);
@@ -150,7 +150,7 @@ export function select(
 const specialTraversal = new Set(["descendant", "adjacent", "siblingsibling"]);
 
 function findFilterElements(
-    root: Node | Node[],
+    root: Element | Element[],
     sel: Selector[],
     options: Options
 ): Node[] {
@@ -208,29 +208,25 @@ function findFilterElements(
 }
 
 function findElements(
-    root: Node | Node[],
+    root: Element | Element[],
     sel: Selector[][],
     options: CSSSelectOptions<Node, Element>,
     limit: number
-) {
+): Element[] {
     if (limit === 0) return [];
 
-    // @ts-ignore
+    // @ts-expect-error TS seems to mess up the type here ¯\_(ツ)_/¯
     const query = compile<Node, Element>(sel, options, root);
-
-    if (query.shouldTestNextSiblings) {
-        // @ts-ignore
-        root = appendNextSiblings(root, DomUtils);
-    }
-
-    const elems = Array.isArray(root)
-        ? DomUtils.removeSubsets(root)
-        : DomUtils.getChildren(root);
+    const elems = prepareContext<Node, Element>(
+        root,
+        DomUtils,
+        query.shouldTestNextSiblings
+    );
 
     return DomUtils.find(
         (node: Node) => DomUtils.isTag(node) && query(node),
         elems,
         true,
         limit
-    );
+    ) as Element[];
 }

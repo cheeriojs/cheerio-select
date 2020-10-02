@@ -1,7 +1,7 @@
 import * as DomUtils from "domutils";
 import { select } from "../src";
 import * as CSSselect from "css-select";
-import type { Element } from "domhandler";
+import type { Node, Element } from "domhandler";
 import { q, t, createWithFriesXML, loadDoc } from "./tools/sizzle-testinit";
 import { parseDOM } from "htmlparser2";
 let document = loadDoc();
@@ -17,7 +17,9 @@ describe("Sizzle", () => {
         // Empty selector returns an empty array
         expect(select("", document)).toHaveLength(0);
         // Text element as context fails silently
-        expect(select("div", document.createTextNode(""))).toStrictEqual([]);
+        expect(
+            select("div", (document.createTextNode("") as Node) as Element)
+        ).toStrictEqual([]);
         const form = document.getElementById("form");
         // Empty string passed to matchesSelector does not match
         expect(CSSselect.is(form, "")).toBe(false);
@@ -198,7 +200,7 @@ describe("Sizzle", () => {
             {
                 xmlMode: true,
             }
-        );
+        ) as Element[];
         // Non-qSA path correctly handles numeric ids (jQuery #14142)
         expect(select("elem:not(:has(*))", xml)).toHaveLength(1);
     });
@@ -435,7 +437,7 @@ describe("Sizzle", () => {
 
         const [div2] = parseDOM(
             "<div><svg width='200' height='250' version='1.1' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='10' width='30' height='30' class='foo'></rect></svg></div>"
-        );
+        ) as Element[];
         // Class selector against SVG
         expect(select(".foo", div2)).toHaveLength(1);
     });
@@ -466,7 +468,9 @@ describe("Sizzle", () => {
         // Name selector for grouped form element within the context of another element
         t("input[name='foo[bar]']", ["hidden2"], form1);
 
-        const [form2] = parseDOM("<form><input name='id'/></form>");
+        const [form2] = parseDOM(
+            "<form><input name='id'/></form>"
+        ) as Element[];
         DomUtils.appendChild(document.body, form2);
 
         // Make sure that rooted queries on forms (with possible expandos) work.
@@ -1657,7 +1661,7 @@ describe("Sizzle", () => {
     });
 
     it("pseudo - position", () => {
-        expect.assertions(33);
+        expect.assertions(32);
 
         // First element
         t("div:first", ["qunit"]);

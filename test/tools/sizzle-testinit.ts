@@ -13,7 +13,7 @@ function getDOMFromPath(
     return htmlparser2.parseDOM(fs.readFileSync(filePath, "utf8"), options);
 }
 
-export interface SimpleDocument extends Array<Node> {
+export interface SimpleDocument extends Array<Element> {
     getElementById(id: string): Element;
     createTextNode(content: string): DataNode;
     createElement(name: string): Element;
@@ -64,7 +64,10 @@ export function t(
     expectedIds: string[],
     context: Node[] | Node = document
 ): void {
-    const actual = select(selector, context) as Element[];
+    const actual = select(
+        selector,
+        context as Element | Element[]
+    ) as Element[];
     const actualIds = actual.map((e) => e.attribs.id);
 
     // Should not contain falsy values
@@ -73,8 +76,8 @@ export function t(
 
 const xmlDoc = getDOMFromPath("fries.xml", {
     xmlMode: true,
-});
+}) as Element[];
 
-export function createWithFriesXML(): Node[] {
+export function createWithFriesXML(): Element[] {
     return xmlDoc;
 }
