@@ -33,6 +33,7 @@ const SCOPE_PSEUDO: PseudoSelector = {
     name: "scope",
     data: null,
 };
+const UNIVERSAL_SELECTOR: Selector = { type: "universal" };
 
 interface CheerioSelector extends PseudoSelector {
     name: Filter;
@@ -151,6 +152,9 @@ export function select(
     return DomUtils.uniqueSort(results.reduce((a, b) => [...a, ...b]));
 }
 
+// Traversals that are treated differently in css-select.
+const specialTraversal = new Set(["descendant", "adjacent", "siblingsibling"]);
+
 function findFilterElements(
     root: Node | Node[],
     sel: Selector[],
@@ -162,11 +166,22 @@ function findFilterElements(
 
     /*
      * Set the number of elements to retrieve.
-     * Eg. for :first, we only have to get a single element
+     * Eg. for :first, we only have to get a single element.
      */
     const limit = getLimit(filter.name, filter.data);
 
-    const elems = findElements(root, [sub], options, limit);
+    if (limit === 0) return [];
+
+    /*
+     * Skip `findElements` call if our selector starts with a positional
+     * pseudo.
+     */
+    const elems =
+        sub.length === 0 || (sub.length === 1 && sub[0] === SCOPE_PSEUDO)
+            ? Array.isArray(root)
+                ? root.slice(0, limit)
+                : [root]
+            : findElements(root, [sub], options, limit);
 
     const result = filterElements(filter.name, elems, filter.data, options);
 
@@ -175,6 +190,15 @@ function findFilterElements(
     }
 
     const remainingSelector = sel.slice(filterIndex + 1);
+
+    /*
+     * Some types of traversals have special logic when they start a selector
+     * in css-select. If this is the case, add a universal selector in front of
+     * the selector to avoid this behavior.
+     */
+    if (specialTraversal.has(remainingSelector[0].type)) {
+        remainingSelector.unshift(UNIVERSAL_SELECTOR);
+    }
 
     // Add a scope token in front of the remaining selector
     remainingSelector.unshift(SCOPE_PSEUDO);
