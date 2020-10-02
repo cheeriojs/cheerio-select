@@ -1,10 +1,10 @@
 {
     "name": "cheerio-select",
-    "description": "jQuery selectors for Cheerio",
+    "description": "CSS selector engine supporting jQuery selectors",
     "version": "0.0.0",
     "author": "Felix Boehm <me@feedic.com>",
     "funding": "https://github.com/sponsors/fb55",
-    "license": "MIT",
+    "license": "BSD-2-Clause",
     "sideEffects": false,
     "repository": {
         "type": "git",
@@ -19,7 +19,8 @@
         "lib/**/*"
     ],
     "scripts": {
-        "test": "jest --coverage",
+        "test": "jest --coverage && npm run lint",
+        "coverage": "cat coverage/lcov.info | coveralls",
         "lint": "npm run lint:es && npm run lint:prettier",
         "lint:es": "eslint src",
         "lint:prettier": "npm run format:prettier:raw -- --check",
@@ -45,6 +46,7 @@
         "@types/node": "^14.11.2",
         "@typescript-eslint/eslint-plugin": "^4.3.0",
         "@typescript-eslint/parser": "^4.3.0",
+        "coveralls": "^3.0.2",
         "eslint": "^7.10.0",
         "eslint-config-prettier": "^6.12.0",
         "htmlparser2": "^4.1.0",
