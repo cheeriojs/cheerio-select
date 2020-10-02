@@ -14,7 +14,6 @@ function getDOMFromPath(
 }
 
 export interface SimpleDocument extends Array<Node> {
-    getElementsByTagName(name: string): Element[];
     getElementById(id: string): Element;
     createTextNode(content: string): DataNode;
     createElement(name: string): Element;
@@ -25,8 +24,6 @@ export interface SimpleDocument extends Array<Node> {
 export function getDocument(file: string): SimpleDocument {
     const document = getDOMFromPath(file) as SimpleDocument;
 
-    document.getElementsByTagName = (name = "*") =>
-        DomUtils.getElementsByTagName(name, document, true);
     document.getElementById = (id: string) =>
         DomUtils.getElementById(id, document) as Element;
     document.createTextNode = (content: string) =>

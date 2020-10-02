@@ -674,7 +674,7 @@ describe("Sizzle", () => {
     });
 
     it("attributes", () => {
-        expect.assertions(68);
+        expect.assertions(77);
 
         // Attribute Exists
         t("#qunit-fixture a[title]", ["google"]);
@@ -852,7 +852,8 @@ describe("Sizzle", () => {
                 "<input type='hidden' id='attrbad_backslash' data-attr='&#92;'/>" +
                 "<input type='hidden' id='attrbad_backslash_quote' data-attr='&#92;&#39;'/>" +
                 "<input type='hidden' id='attrbad_backslash_backslash' data-attr='&#92;&#92;'/>" +
-                "<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>"
+                "<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>",
+            { decodeEntities: true }
         ) as Element[];
         attrbad.forEach((attr) =>
             DomUtils.appendChild(document.getElementById("qunit-fixture"), attr)
@@ -868,29 +869,26 @@ describe("Sizzle", () => {
         // Escaped brackets
         t("input[name=foo\\[baz\\]]", ["attrbad_brackets"]);
 
-        // TODO Fix attribute parsing
-        /*
-         * // Escaped quote + right bracket
-         * t("input[data-attr='foo_baz\\']']", ["attrbad_injection"]);
-         *
-         *  // Quoted quote
-         * t("input[data-attr='\\'']", ["attrbad_quote"]);
-         *  // Quoted backslash
-         * t("input[data-attr='\\\\']", ["attrbad_backslash"]);
-         *  // Quoted backslash quote
-         * t("input[data-attr='\\\\\\'']", ["attrbad_backslash_quote"]);
-         *  // Quoted backslash backslash
-         * t("input[data-attr='\\\\\\\\']", ["attrbad_backslash_backslash"]);
-         *
-         *  // Quoted backslash backslash (numeric escape)
-         * t("input[data-attr='\\5C\\\\']", ["attrbad_backslash_backslash"]);
-         *  // Quoted backslash backslash (numeric escape with trailing space)
-         * t("input[data-attr='\\5C \\\\']", ["attrbad_backslash_backslash"]);
-         *  // Quoted backslash backslash (numeric escape with trailing tab)
-         * t("input[data-attr='\\5C\t\\\\']", ["attrbad_backslash_backslash"]);
-         * // Long numeric escape (BMP)
-         * t("input[data-attr='\\04e00']", ["attrbad_unicode"]);
-         */
+        // Escaped quote + right bracket
+        t("input[data-attr='foo_baz\\']']", ["attrbad_injection"]);
+
+        // Quoted quote
+        t("input[data-attr='\\'']", ["attrbad_quote"]);
+        // Quoted backslash
+        t("input[data-attr='\\\\']", ["attrbad_backslash"]);
+        // Quoted backslash quote
+        t("input[data-attr='\\\\\\'']", ["attrbad_backslash_quote"]);
+        // Quoted backslash backslash
+        t("input[data-attr='\\\\\\\\']", ["attrbad_backslash_backslash"]);
+
+        // Quoted backslash backslash (numeric escape)
+        t("input[data-attr='\\5C\\\\']", ["attrbad_backslash_backslash"]);
+        // Quoted backslash backslash (numeric escape with trailing space)
+        t("input[data-attr='\\5C \\\\']", ["attrbad_backslash_backslash"]);
+        // Quoted backslash backslash (numeric escape with trailing tab)
+        t("input[data-attr='\\5C\t\\\\']", ["attrbad_backslash_backslash"]);
+        // Long numeric escape (BMP)
+        t("input[data-attr='\\04e00']", ["attrbad_unicode"]);
 
         document.getElementById("attrbad_unicode").attribs["data-attr"] =
             "\uD834\uDF06A";
@@ -914,7 +912,9 @@ describe("Sizzle", () => {
         div.children = parseDOM("<div id='foo' xml:test='something'></div>");
 
         // Finding by attribute with escaped characters.
-        expect(select("[xml\\:test]", div)).toStrictEqual([div.children[0]]);
+        expect(CSSselect.selectAll("[xml\\:test]", div)).toStrictEqual([
+            div.children[0],
+        ]);
 
         const foo = document.getElementById("foo");
         // Object.prototype property "constructor" (negative)',
@@ -1656,7 +1656,7 @@ describe("Sizzle", () => {
         t("> *:first", ["nothiddendivchild"], nothiddendiv);
     });
 
-    it.only("pseudo - position", () => {
+    it("pseudo - position", () => {
         expect.assertions(33);
 
         // First element
@@ -1741,7 +1741,7 @@ describe("Sizzle", () => {
         ]);
 
         // Isolated position
-        t(":last", ["last"]);
+        t(":last", ["last"], document.body);
 
         // See jQuery #12526
         const context = document.getElementById("qunit-fixture");

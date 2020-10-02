@@ -76,12 +76,6 @@ function filterElements(
             return elems.length > 0 ? [elems[elems.length - 1]] : elems;
         case "nth":
         case "eq":
-            console.log(
-                num,
-                elems.length,
-                // @ts-ignore
-                elems.map((e) => [e.name, e.attribs.id])
-            );
             return isFinite(num) && Math.abs(num) < elems.length
                 ? [num < 0 ? elems[elems.length + num] : elems[num]]
                 : [];
@@ -177,7 +171,9 @@ function findFilterElements(
      * pseudo.
      */
     const elems =
-        sub.length === 0 || (sub.length === 1 && sub[0] === SCOPE_PSEUDO)
+        sub.length === 0 && !Array.isArray(root)
+            ? DomUtils.getChildren(root).filter(DomUtils.isTag)
+            : sub.length === 0 || (sub.length === 1 && sub[0] === SCOPE_PSEUDO)
             ? Array.isArray(root)
                 ? root.slice(0, limit)
                 : [root]
