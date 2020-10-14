@@ -1,4 +1,4 @@
-import { parse, Selector, PseudoSelector } from "css-what";
+import { parse, Selector, PseudoSelector, Traversal } from "css-what";
 import {
     _compileToken as compile,
     Options as CSSSelectOptions,
@@ -33,7 +33,7 @@ const SCOPE_PSEUDO: PseudoSelector = {
     name: "scope",
     data: null,
 };
-const UNIVERSAL_SELECTOR: Selector = { type: "universal" };
+const UNIVERSAL_SELECTOR: Selector = { type: "universal", namespace: null };
 
 interface CheerioSelector extends PseudoSelector {
     name: Filter;
