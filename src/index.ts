@@ -147,7 +147,10 @@ export function select(
 }
 
 // Traversals that are treated differently in css-select.
-const specialTraversal = new Set(["descendant", "adjacent", "siblingsibling"]);
+const specialTraversal = new Set<Traversal["type"]>([
+    "descendant",
+    "adjacent",
+]) as Set<string>;
 
 function findFilterElements(
     root: Element | Element[],
