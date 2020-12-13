@@ -6,6 +6,10 @@ import { q, t, createWithFriesXML, loadDoc } from "./tools/sizzle-testinit";
 import { parseDOM } from "htmlparser2";
 let document = loadDoc();
 
+function getDOM(str: string) {
+    return [...parseDOM(str)];
+}
+
 describe("Sizzle", () => {
     beforeEach(() => {
         document = loadDoc();
@@ -126,7 +130,7 @@ describe("Sizzle", () => {
         t("div em, em\\,", [], siblingTest);
 
         const iframe = document.getElementById("iframe");
-        iframe.children = parseDOM("<body><p id='foo'>bar</p></body>");
+        iframe.children = getDOM("<body><p id='foo'>bar</p></body>");
         iframe.children.forEach((e) => {
             e.parent = iframe;
         });
@@ -140,7 +144,7 @@ describe("Sizzle", () => {
         for (let i = 0; i < 100; i++) {
             markup = `<div>${markup}</div>`;
         }
-        const [html] = parseDOM(markup);
+        const [html] = getDOM(markup);
         DomUtils.appendChild(document.body, html);
         // No stack or performance problems with large amounts of descendents
         expect(select("body div div div", document).length).toBeTruthy();
@@ -847,7 +851,7 @@ describe("Sizzle", () => {
          * Make sure attribute value quoting works correctly. See jQuery #6093; #6428; #13894
          * Use seeded results to bypass querySelectorAll optimizations
          */
-        const attrbad = parseDOM(
+        const attrbad = getDOM(
             "<input type='hidden' id='attrbad_space' name='foo bar'/>" +
                 "<input type='hidden' id='attrbad_dot' value='2' name='foo.baz'/>" +
                 "<input type='hidden' id='attrbad_brackets' value='2' name='foo[baz]'/>" +
@@ -856,8 +860,7 @@ describe("Sizzle", () => {
                 "<input type='hidden' id='attrbad_backslash' data-attr='&#92;'/>" +
                 "<input type='hidden' id='attrbad_backslash_quote' data-attr='&#92;&#39;'/>" +
                 "<input type='hidden' id='attrbad_backslash_backslash' data-attr='&#92;&#92;'/>" +
-                "<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>",
-            { decodeEntities: true }
+                "<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>"
         ) as Element[];
         attrbad.forEach((attr) =>
             DomUtils.appendChild(document.getElementById("qunit-fixture"), attr)
@@ -913,7 +916,7 @@ describe("Sizzle", () => {
 
         // #3279
         const div = document.createElement("div");
-        div.children = parseDOM("<div id='foo' xml:test='something'></div>");
+        div.children = getDOM("<div id='foo' xml:test='something'></div>");
 
         // Finding by attribute with escaped characters.
         expect(CSSselect.selectAll("[xml\\:test]", div)).toStrictEqual([
@@ -1007,7 +1010,7 @@ describe("Sizzle", () => {
         // Verify that the child position isn't being cached improperly
         const secondChildren = select("p:nth-child(2)", document);
         const newNodes = secondChildren.map((child) => {
-            const [node] = parseDOM("<div></div>");
+            const [node] = getDOM("<div></div>");
             DomUtils.prepend(child, node);
             return node;
         });
@@ -1360,7 +1363,7 @@ describe("Sizzle", () => {
         document.body.children.push(tmp);
 
         ["button", "submit", "reset"].forEach((type) => {
-            const els = parseDOM(
+            const els = getDOM(
                 "<input id='input_%' type='%'/><button id='button_%' type='%'>test</button>".replace(
                     /%/g,
                     type
@@ -1751,7 +1754,7 @@ describe("Sizzle", () => {
         const context = document.getElementById("qunit-fixture");
         DomUtils.appendChild(
             context,
-            parseDOM("<div id='jquery12526'></div>")[0]
+            getDOM("<div id='jquery12526'></div>")[0]
         );
 
         // Post-manipulation positional
@@ -1761,7 +1764,7 @@ describe("Sizzle", () => {
     it("pseudo - form", () => {
         expect.assertions(10);
 
-        const extraTexts = parseDOM(
+        const extraTexts = getDOM(
             '<input id="impliedText"/><input id="capitalText" type="TEXT">'
         );
 
