@@ -1,6 +1,6 @@
 import { parse, Selector, PseudoSelector, Traversal } from "css-what";
 import {
-    _compileToken as compile,
+    _compileToken as compileToken,
     Options as CSSSelectOptions,
     prepareContext,
 } from "css-select";
@@ -60,7 +60,7 @@ function getLimit(filter: Filter, data: string | null) {
 }
 
 function filterElements(
-    filter: string,
+    filter: Filter,
     elems: Element[],
     data: Selector[][] | string | null,
     options: Options
@@ -85,30 +85,30 @@ function filterElements(
             return elems.filter((_, i) => i % 2 === 0);
         case "odd":
             return elems.filter((_, i) => i % 2 === 1);
-        case "not":
-            return filterNot(elems, data as Selector[][], options);
+        case "not": {
+            const filtered = new Set(
+                (data as Selector[][])
+                    .map((sel) =>
+                        findFilterElements(
+                            elems,
+                            [...sel, SCOPE_PSEUDO],
+                            options
+                        )
+                    )
+                    // TODO: Use flatMap
+                    .reduce((arr, rest) => [...arr, ...rest], [])
+            );
+
+            return elems.filter((e) => !filtered.has(e));
+        }
     }
-
-    throw new Error("Did not check all cases");
-}
-
-function filterNot(elems: Element[], data: Selector[][], options: Options) {
-    const filtered = new Set(
-        data
-            .map((sel) =>
-                findFilterElements(elems, [SCOPE_PSEUDO, ...sel], options)
-            )
-            // TODO: Use flatMap
-            .reduce((arr, rest) => [...arr, ...rest], [])
-    );
-
-    return elems.filter((e) => !filtered.has(e));
 }
 
 function isFilter(s: Selector): s is CheerioSelector {
     if (s.type !== "pseudo") return false;
     if (filterNames.has(s.name)) return true;
     if (s.name === "not" && Array.isArray(s.data)) {
+        // Only consider `:not` with embedded filters
         return s.data.some((s) => s.some(isFilter));
     }
 
@@ -121,16 +121,20 @@ export function select(
     options: Options = {}
 ): Node[] {
     const sel = parse(selector);
-    const results: Node[][] = [];
+    const filteredSelectors: Selector[][] = [];
     const plainSelectors: Selector[][] = [];
 
-    for (let i = 0; i < sel.length; i++) {
-        if (sel[i].some(isFilter)) {
-            results.push(findFilterElements(root, sel[i], options));
+    for (const subSel of sel) {
+        if (subSel.some(isFilter)) {
+            filteredSelectors.push(subSel);
         } else {
-            plainSelectors.push(sel[i]);
+            plainSelectors.push(subSel);
         }
     }
+
+    const results: Node[][] = filteredSelectors.map((sel) =>
+        findFilterElements(root, sel, options)
+    );
 
     // Plain selectors can be queried in a single go
     if (plainSelectors.length) {
@@ -213,13 +217,13 @@ function findFilterElements(
 function findElements(
     root: Element | Element[],
     sel: Selector[][],
-    options: CSSSelectOptions<Node, Element>,
+    options: Options,
     limit: number
 ): Element[] {
     if (limit === 0) return [];
 
     // @ts-expect-error TS seems to mess up the type here ¯\_(ツ)_/¯
-    const query = compile<Node, Element>(sel, options, root);
+    const query = compileToken<Node, Element>(sel, options, root);
     const elems = prepareContext<Node, Element>(
         root,
         DomUtils,
