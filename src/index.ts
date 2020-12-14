@@ -59,7 +59,7 @@ function getLimit(filter: Filter, data: string | null) {
     }
 }
 
-function filterElements(
+function filterByPosition(
     filter: Filter,
     elems: Element[],
     data: Selector[][] | string | null,
@@ -186,7 +186,7 @@ function findFilterElements(
                 : [root]
             : findElements(root, [sub], options, limit);
 
-    const result = filterElements(filter.name, elems, filter.data, options);
+    const result = filterByPosition(filter.name, elems, filter.data, options);
 
     if (!result.length || sel.length === filterIndex + 1) {
         return result;
