@@ -1,4 +1,4 @@
-import { parse, Selector, PseudoSelector, Traversal } from "css-what";
+import { parse, Selector, PseudoSelector, isTraversal } from "css-what";
 import {
     _compileToken as compileToken,
     Options as CSSSelectOptions,
@@ -39,7 +39,7 @@ interface CheerioSelector extends PseudoSelector {
     name: Filter;
     data: string | null;
 }
-type Options = CSSSelectOptions<Node, Element>;
+export type Options = CSSSelectOptions<Node, Element>;
 
 function getLimit(filter: Filter, data: string | null) {
     const num = data != null ? parseInt(data, 10) : NaN;
@@ -87,21 +87,86 @@ function filterByPosition(
             return elems.filter((_, i) => i % 2 === 1);
         case "not": {
             const filtered = new Set(
-                (data as Selector[][])
-                    .map((sel) =>
-                        findFilterElements(
-                            elems,
-                            [...sel, SCOPE_PSEUDO],
-                            options
-                        )
-                    )
-                    // TODO: Use flatMap
-                    .reduce((arr, rest) => [...arr, ...rest], [])
+                filterParsed(data as Selector[][], elems, options)
             );
 
             return elems.filter((e) => !filtered.has(e));
         }
     }
+}
+
+export function filter(
+    selector: string,
+    elements: Element[],
+    options: Options = {}
+): Element[] {
+    return DomUtils.uniqueSort(
+        filterParsed(parse(selector, options), elements, options)
+    ) as Element[];
+}
+
+function getDocumentRoot(node: Node) {
+    while (node.parent) node = node.parent;
+    return node;
+}
+
+const CUSTOM_SCOPE_PSEUDO = { ...SCOPE_PSEUDO };
+
+/**
+ * Filter a set of elements by a selector.
+ *
+ * If there are multiple selectors, this can
+ * return elements multiple times; use `uniqueSort`
+ * to eliminate duplicates afterwards.
+ *
+ * @param selector Selector to filter by.
+ * @param elements Elements to filter.
+ * @param options Options for selector.
+ */
+function filterParsed(
+    selector: Selector[][],
+    elements: Element[],
+    options: Options
+) {
+    if (elements.length === 0) return [];
+
+    const [plainSelectors, filteredSelectors] = groupSelectors(selector);
+    const results = [];
+
+    if (plainSelectors.length) {
+        results.push(filterElements(elements, plainSelectors, options));
+    }
+
+    for (const filteredSelector of filteredSelectors) {
+        if (filteredSelector.some(isTraversal)) {
+            /*
+             * Get one root node, run selector with the scope
+             * set to all of our nodes.
+             */
+            const root = getDocumentRoot(elements[0]);
+            const sel = [...filteredSelector, CUSTOM_SCOPE_PSEUDO];
+            results.push(
+                findFilterElements(
+                    root as Element,
+                    sel,
+                    options,
+                    true,
+                    elements
+                )
+            );
+        } else {
+            // Performance optimization: If we don't have to traverse, just filter set.
+            results.push(
+                findFilterElements(elements, filteredSelector, options, false)
+            );
+        }
+    }
+
+    if (results.length === 1) {
+        return results[0];
+    }
+
+    return results.reduce((arr, rest) => [...arr, ...rest], []);
 }
 
 function isFilter(s: Selector): s is CheerioSelector {
@@ -115,30 +180,37 @@ function isFilter(s: Selector): s is CheerioSelector {
     return false;
 }
 
+function groupSelectors(
+    selectors: Selector[][]
+): [plain: Selector[][], filtered: Selector[][]] {
+    const filteredSelectors: Selector[][] = [];
+    const plainSelectors: Selector[][] = [];
+
+    for (const selector of selectors) {
+        if (selector.some(isFilter)) {
+            filteredSelectors.push(selector);
+        } else {
+            plainSelectors.push(selector);
+        }
+    }
+
+    return [plainSelectors, filteredSelectors];
+}
+
 export function select(
     selector: string,
     root: Element | Element[],
     options: Options = {}
-): Node[] {
-    const sel = parse(selector);
-    const filteredSelectors: Selector[][] = [];
-    const plainSelectors: Selector[][] = [];
+): Element[] {
+    const [plain, filtered] = groupSelectors(parse(selector, options));
 
-    for (const subSel of sel) {
-        if (subSel.some(isFilter)) {
-            filteredSelectors.push(subSel);
-        } else {
-            plainSelectors.push(subSel);
-        }
-    }
-
-    const results: Node[][] = filteredSelectors.map((sel) =>
-        findFilterElements(root, sel, options)
+    const results: Element[][] = filtered.map((sel) =>
+        findFilterElements(root, sel, options, true)
     );
 
     // Plain selectors can be queried in a single go
-    if (plainSelectors.length) {
-        results.push(findElements(root, plainSelectors, options, Infinity));
+    if (plain.length) {
+        results.push(findElements(root, plain, options, Infinity));
     }
 
     // If there was only a single selector, just return the result
@@ -147,23 +219,52 @@ export function select(
     }
 
     // Sort results, filtering for duplicates
-    return DomUtils.uniqueSort(results.reduce((a, b) => [...a, ...b]));
+    return DomUtils.uniqueSort(
+        results.reduce((a, b) => [...a, ...b])
+    ) as Element[];
 }
 
 // Traversals that are treated differently in css-select.
-const specialTraversal = new Set<Traversal["type"]>([
-    "descendant",
-    "adjacent",
-]) as Set<string>;
+const specialTraversal = new Set<Selector["type"]>(["descendant", "adjacent"]);
 
+function includesScopePseudo(t: Selector): boolean {
+    return (
+        t !== SCOPE_PSEUDO &&
+        t.type === "pseudo" &&
+        (t.name === "scope" ||
+            (Array.isArray(t.data) &&
+                t.data.some((data) => data.some(includesScopePseudo))))
+    );
+}
+
+function addContextIfScope(
+    selector: Selector[],
+    options: Options,
+    scopeContext?: Element[]
+) {
+    return scopeContext && selector.some(includesScopePseudo)
+        ? { ...options, context: scopeContext }
+        : options;
+}
+
+/**
+ *
+ * @param root Element(s) to search from.
+ * @param selector Selector to look for.
+ * @param options Options for querying.
+ * @param queryForSelector Query multiple levels deep for the initial selector, even if it doesn't contain a traversal.
+ * @param scopeContext Optional context for a :scope.
+ */
 function findFilterElements(
     root: Element | Element[],
-    sel: Selector[],
-    options: Options
-): Node[] {
-    const filterIndex = sel.findIndex(isFilter);
-    const sub = sel.slice(0, filterIndex);
-    const filter: CheerioSelector = sel[filterIndex] as CheerioSelector;
+    selector: Selector[],
+    options: Options,
+    queryForSelector: boolean,
+    scopeContext?: Element[]
+): Element[] {
+    const filterIndex = selector.findIndex(isFilter);
+    const sub = selector.slice(0, filterIndex);
+    const filter: CheerioSelector = selector[filterIndex] as CheerioSelector;
 
     /*
      * Set the number of elements to retrieve.
@@ -173,45 +274,79 @@ function findFilterElements(
 
     if (limit === 0) return [];
 
+    const subOpts = addContextIfScope(sub, options, scopeContext);
+
     /*
      * Skip `findElements` call if our selector starts with a positional
      * pseudo.
      */
-    const elems =
+    const elemsNoLimit =
         sub.length === 0 && !Array.isArray(root)
             ? DomUtils.getChildren(root).filter(DomUtils.isTag)
             : sub.length === 0 || (sub.length === 1 && sub[0] === SCOPE_PSEUDO)
             ? Array.isArray(root)
-                ? root.slice(0, limit)
+                ? root
                 : [root]
-            : findElements(root, [sub], options, limit);
+            : queryForSelector || sub.some(isTraversal)
+            ? findElements(root, [sub], subOpts, limit)
+            : // We know that this cannot be reached with root not being an array.
+              filterElements(root as Element[], [sub], subOpts);
+
+    const elems = elemsNoLimit.slice(0, limit);
 
     const result = filterByPosition(filter.name, elems, filter.data, options);
 
-    if (!result.length || sel.length === filterIndex + 1) {
+    if (result.length === 0 || selector.length === filterIndex + 1) {
         return result;
     }
 
-    const remainingSelector = sel.slice(filterIndex + 1);
+    const remainingSelector = selector.slice(filterIndex + 1);
+    const remainingHasTraversal = remainingSelector.some(isTraversal);
+
+    const remainingOpts = addContextIfScope(
+        remainingSelector,
+        options,
+        scopeContext
+    );
+
+    if (remainingHasTraversal) {
+        /*
+         * Some types of traversals have special logic when they start a selector
+         * in css-select. If this is the case, add a universal selector in front of
+         * the selector to avoid this behavior.
+         */
+        if (specialTraversal.has(remainingSelector[0].type)) {
+            remainingSelector.unshift(UNIVERSAL_SELECTOR);
+        }
+
+        /*
+         * Add a scope token in front of the remaining selector,
+         * to make sure traversals don't match elements that aren't a
+         * part of the considered tree.
+         */
+        remainingSelector.unshift(SCOPE_PSEUDO);
+    }
 
     /*
-     * Some types of traversals have special logic when they start a selector
-     * in css-select. If this is the case, add a universal selector in front of
-     * the selector to avoid this behavior.
+     * If we have another filter, recursively call `findFilterElements`,
+     * with the `recursive` flag disabled. We only have to look for more
+     * elements when we see a traversal.
+     *
+     * Otherwise,
      */
-    if (specialTraversal.has(remainingSelector[0].type)) {
-        remainingSelector.unshift(UNIVERSAL_SELECTOR);
-    }
-
-    // Add a scope token in front of the remaining selector
-    remainingSelector.unshift(SCOPE_PSEUDO);
-
-    if (remainingSelector.some(isFilter)) {
-        return findFilterElements(result, remainingSelector, options);
-    }
-
-    // Query existing elements
-    return findElements(result, [remainingSelector], options, Infinity);
+    return remainingSelector.some(isFilter)
+        ? findFilterElements(
+              result,
+              remainingSelector,
+              options,
+              false,
+              scopeContext
+          )
+        : remainingHasTraversal
+        ? // Query existing elements to resolve traversal.
+          findElements(result, [remainingSelector], remainingOpts, Infinity)
+        : // If we don't have any more traversals, simply filter elements.
+          filterElements(result, [remainingSelector], remainingOpts);
 }
 
 function findElements(
@@ -236,4 +371,14 @@ function findElements(
         true,
         limit
     ) as Element[];
+}
+
+function filterElements(
+    elements: Element[],
+    sel: Selector[][],
+    options: Options
+): Element[] {
+    // @ts-expect-error TS seems to mess up the type here ¯\_(ツ)_/¯
+    const query = compileToken<Node, Element>(sel, options);
+    return elements.filter(query);
 }

@@ -1,16 +1,16 @@
 import { parseDOM } from "htmlparser2";
-import * as CheerioSelect from "./";
+import { select, filter } from "./";
 import type { Element } from "domhandler";
 
 describe("index", () => {
     it("should find elements", () => {
         const dom = parseDOM("<div><p>First<p>Second") as Element[];
-        expect(CheerioSelect.select("div", dom)).toHaveLength(1);
+        expect(select("div", dom)).toHaveLength(1);
     });
 
     it("should support positionals", () => {
         const dom = parseDOM("<div><p>First<p>Second") as Element[];
-        expect(CheerioSelect.select("p:first", dom)).toMatchInlineSnapshot(`
+        expect(select("p:first", dom)).toMatchInlineSnapshot(`
             Array [
               <p>
                 First
@@ -18,12 +18,24 @@ describe("index", () => {
             ]
         `);
 
-        expect(CheerioSelect.select("p:last", dom)).toMatchInlineSnapshot(`
+        expect(select("p:last", dom)).toMatchInlineSnapshot(`
             Array [
               <p>
                 Second
               </p>,
             ]
         `);
+    });
+
+    it("should filter elements", () => {
+        const dom = parseDOM("<div><p>First<p>Second") as Element[];
+        const ps = select("p", dom);
+        expect(ps).toHaveLength(2);
+        expect(filter("p", ps)).toHaveLength(2);
+        expect(filter("div p", ps)).toHaveLength(2);
+        expect(filter(":first", ps)).toHaveLength(1);
+        expect(filter("p:first", ps)).toHaveLength(1);
+        expect(filter("div p:first", ps)).toHaveLength(1);
+        expect(filter("div:first p:first", ps)).toHaveLength(1);
     });
 });

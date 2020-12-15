@@ -1,6 +1,5 @@
 import * as DomUtils from "domutils";
-import { select } from "../src";
-import * as CSSselect from "css-select";
+import { select, filter, Options } from "../src";
 import type { Node, Element } from "domhandler";
 import { q, t, createWithFriesXML, loadDoc } from "./tools/sizzle-testinit";
 import { parseDOM } from "htmlparser2";
@@ -8,6 +7,17 @@ let document = loadDoc();
 
 function getDOM(str: string) {
     return [...parseDOM(str)];
+}
+
+function matchesSelector(
+    element: Node,
+    selector: string,
+    options?: Options
+): boolean {
+    return (
+        DomUtils.isTag(element) &&
+        filter(selector, [element], options).length === 1
+    );
 }
 
 describe("Sizzle", () => {
@@ -26,7 +36,7 @@ describe("Sizzle", () => {
         ).toStrictEqual([]);
         const form = document.getElementById("form");
         // Empty string passed to matchesSelector does not match
-        expect(CSSselect.is(form, "")).toBe(false);
+        expect(matchesSelector(form, "")).toBe(false);
         // Empty selector returns an empty array
         expect(select(" ", document)).toHaveLength(0);
         // Empty selector returns an empty array
@@ -183,27 +193,19 @@ describe("Sizzle", () => {
         // Attribute selector filter with ID
         expect(
             select("component", xml).filter((node) =>
-                CSSselect.is(node, "#seite1")
+                matchesSelector(node, "#seite1")
             )
         ).toHaveLength(1);
         // Descendent selector and dir caching
         expect(select("meta property thing", xml)).toHaveLength(2);
         // Check for namespaced element
-        expect(
-            CSSselect.is(
-                xml.filter((t) => t.type === "tag").pop(),
-                "soap\\:Envelope",
-                {
-                    xmlMode: true,
-                }
-            )
-        ).toBe(true);
+        const xmlOptions = { xmlMode: true };
+        const tag = xml.filter((t) => t.type === "tag").pop() as Element;
+        expect(matchesSelector(tag, "soap\\:Envelope", xmlOptions)).toBe(true);
 
         xml = parseDOM(
             "<?xml version='1.0' encoding='UTF-8'?><root><elem id='1'/></root>",
-            {
-                xmlMode: true,
-            }
+            xmlOptions
         ) as Element[];
         // Non-qSA path correctly handles numeric ids (jQuery #14142)
         expect(select("elem:not(:has(*))", xml)).toHaveLength(1);
@@ -213,7 +215,7 @@ describe("Sizzle", () => {
         expect.assertions(26);
 
         const broken = (selector: string) =>
-            expect(() => CSSselect.compile(selector)).toThrow(Error);
+            expect(() => select(selector, [])).toThrow(Error);
 
         broken("[");
         broken("(");
@@ -365,7 +367,7 @@ describe("Sizzle", () => {
     });
 
     it("class", () => {
-        expect.assertions(27);
+        expect.assertions(25);
 
         // Class Selector
         t(".blog", ["mark", "simon"]);
@@ -421,19 +423,15 @@ describe("Sizzle", () => {
         expect(select(".e", div)).toStrictEqual([div.children[0], lastChild]);
 
         // .null does not match an element with no class
-        expect(CSSselect.is(div, ".null")).toBe(false);
+        expect(matchesSelector(div, ".null")).toBe(false);
         // .null does not match an element with no class
-        expect(CSSselect.is(div.children[0], ".null div")).toBe(false);
+        expect(matchesSelector(div.children[0], ".null div")).toBe(false);
         div.attribs.class = "null";
         // .null matches element with class 'null'
-        expect(CSSselect.is(div, ".null")).toBe(true);
+        expect(matchesSelector(div, ".null")).toBe(true);
         // Caching system respects DOM changes
-        expect(CSSselect.is(div.children[0], ".null div")).toBe(true);
-        // Testing class on document doesn't error
-        expect(CSSselect.is(document, ".foo")).toBe(false);
+        expect(matchesSelector(div.children[0], ".null div")).toBe(true);
         lastChild.attribs.class += " hasOwnProperty toString";
-        // Testing class on global object doesn't error
-        expect(CSSselect.is(global, ".foo")).toBe(false);
         // Classes match Object.prototype properties
         expect(select(".e.hasOwnProperty.toString", div)).toStrictEqual([
             lastChild,
@@ -798,18 +796,20 @@ describe("Sizzle", () => {
         opt.attribs.test = "";
 
         // Attribute Is Not Equal Matches
-        expect(CSSselect.is(opt, "[id*=option1][type!=checkbox]")).toBe(true);
+        expect(matchesSelector(opt, "[id*=option1][type!=checkbox]")).toBe(
+            true
+        );
         // Attribute With No Quotes Contains Matches
-        expect(CSSselect.is(opt, "[id*=option1]")).toBe(true);
+        expect(matchesSelector(opt, "[id*=option1]")).toBe(true);
         // Attribute With No Quotes No Content Matches
-        expect(CSSselect.is(opt, "[test=]")).toBe(true);
+        expect(matchesSelector(opt, "[test=]")).toBe(true);
         // Attribute with empty string value does not match startsWith selector (^=)
-        expect(CSSselect.is(opt, "[test^='']")).toBe(false);
+        expect(matchesSelector(opt, "[test^='']")).toBe(false);
         // Attribute With No Quotes Equals Matches
-        expect(CSSselect.is(opt, "[id=option1a]")).toBe(true);
+        expect(matchesSelector(opt, "[id=option1a]")).toBe(true);
         // Attribute With No Quotes Href Contains Matches
         expect(
-            CSSselect.is(document.getElementById("simon1"), "a[href*=#]")
+            matchesSelector(document.getElementById("simon1"), "a[href*=#]")
         ).toBe(true);
 
         // Empty values
@@ -833,18 +833,18 @@ describe("Sizzle", () => {
         input.attribs.title = "Don't click me";
 
         // Quote within attribute value does not mess up tokenizer
-        expect(CSSselect.is(input, 'input[title="Don\'t click me"]')).toBe(
+        expect(matchesSelector(input, 'input[title="Don\'t click me"]')).toBe(
             true
         );
 
         // See jQuery #12303
         input.attribs["data-pos"] = ":first";
         // POS within attribute value is treated as an attribute value
-        expect(CSSselect.is(input, "input[data-pos=\\:first]")).toBe(true);
+        expect(matchesSelector(input, "input[data-pos=\\:first]")).toBe(true);
         // POS within attribute value is treated as an attribute value
-        expect(CSSselect.is(input, "input[data-pos=':first']")).toBe(true);
+        expect(matchesSelector(input, "input[data-pos=':first']")).toBe(true);
         // POS within attribute value after pseudo is treated as an attribute value
-        expect(CSSselect.is(input, ":input[data-pos=':first']")).toBe(true);
+        expect(matchesSelector(input, ":input[data-pos=':first']")).toBe(true);
         delete input.attribs["data-pos"];
 
         /*
@@ -919,9 +919,7 @@ describe("Sizzle", () => {
         div.children = getDOM("<div id='foo' xml:test='something'></div>");
 
         // Finding by attribute with escaped characters.
-        expect(CSSselect.selectAll("[xml\\:test]", div)).toStrictEqual([
-            div.children[0],
-        ]);
+        expect(select("[xml\\:test]", div)).toStrictEqual([div.children[0]]);
 
         const foo = document.getElementById("foo");
         // Object.prototype property "constructor" (negative)',
@@ -1340,7 +1338,7 @@ describe("Sizzle", () => {
 
         const select1 = document.getElementById("select1");
         // Has Option Matches
-        expect(CSSselect.is(select1, ":has(option)")).toBe(true);
+        expect(matchesSelector(select1, ":has(option)")).toBe(true);
 
         // Empty string contains
         expect(select("a:contains('')", document).length).toBeTruthy();
@@ -1375,9 +1373,9 @@ describe("Sizzle", () => {
             t(`#tmp_input :${type}`, [`input_${type}`, `button_${type}`]);
 
             // Input Matches :${type}
-            expect(CSSselect.is(els[0], `:${type}`)).toBe(true);
+            expect(matchesSelector(els[0], `:${type}`)).toBe(true);
             // Button Matches :${type}
-            expect(CSSselect.is(els[1], `:${type}`)).toBe(true);
+            expect(matchesSelector(els[1], `:${type}`)).toBe(true);
         });
 
         document.body.children.pop();
