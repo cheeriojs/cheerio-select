@@ -6,58 +6,20 @@ import {
 } from "css-select";
 import * as DomUtils from "domutils";
 import type { Element, Node } from "domhandler";
+import { getDocumentRoot, groupSelectors } from "./helpers";
+import { Filter, isFilter, CheerioSelector, getLimit } from "./positionals";
 
-type Filter =
-    | "first"
-    | "last"
-    | "eq"
-    | "nth"
-    | "gt"
-    | "lt"
-    | "even"
-    | "odd"
-    | "not";
-const filterNames = new Set([
-    "first",
-    "last",
-    "eq",
-    "gt",
-    "nth",
-    "lt",
-    "even",
-    "odd",
-]);
-
+/** Used to indicate a scope should be filtered. Might be ignored when filtering. */
 const SCOPE_PSEUDO: PseudoSelector = {
     type: "pseudo",
     name: "scope",
     data: null,
 };
+/** Used for actually filtering for scope. */
+const CUSTOM_SCOPE_PSEUDO: PseudoSelector = { ...SCOPE_PSEUDO };
 const UNIVERSAL_SELECTOR: Selector = { type: "universal", namespace: null };
 
-interface CheerioSelector extends PseudoSelector {
-    name: Filter;
-    data: string | null;
-}
 export type Options = CSSSelectOptions<Node, Element>;
-
-function getLimit(filter: Filter, data: string | null) {
-    const num = data != null ? parseInt(data, 10) : NaN;
-
-    switch (filter) {
-        case "first":
-            return 1;
-        case "nth":
-        case "eq":
-            return isFinite(num) ? (num >= 0 ? num + 1 : Infinity) : 0;
-        case "lt":
-            return isFinite(num) ? (num >= 0 ? num : Infinity) : 0;
-        case "gt":
-            return isFinite(num) ? Infinity : 0;
-        default:
-            return Infinity;
-    }
-}
 
 function filterByPosition(
     filter: Filter,
@@ -104,13 +66,6 @@ export function filter(
         filterParsed(parse(selector, options), elements, options)
     ) as Element[];
 }
-
-function getDocumentRoot(node: Node) {
-    while (node.parent) node = node.parent;
-    return node;
-}
-
-const CUSTOM_SCOPE_PSEUDO = { ...SCOPE_PSEUDO };
 
 /**
  * Filter a set of elements by a selector.
@@ -167,34 +122,6 @@ function filterParsed(
     }
 
     return results.reduce((arr, rest) => [...arr, ...rest], []);
-}
-
-function isFilter(s: Selector): s is CheerioSelector {
-    if (s.type !== "pseudo") return false;
-    if (filterNames.has(s.name)) return true;
-    if (s.name === "not" && Array.isArray(s.data)) {
-        // Only consider `:not` with embedded filters
-        return s.data.some((s) => s.some(isFilter));
-    }
-
-    return false;
-}
-
-function groupSelectors(
-    selectors: Selector[][]
-): [plain: Selector[][], filtered: Selector[][]] {
-    const filteredSelectors: Selector[][] = [];
-    const plainSelectors: Selector[][] = [];
-
-    for (const selector of selectors) {
-        if (selector.some(isFilter)) {
-            filteredSelectors.push(selector);
-        } else {
-            plainSelectors.push(selector);
-        }
-    }
-
-    return [plainSelectors, filteredSelectors];
 }
 
 export function select(
