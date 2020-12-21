@@ -1,7 +1,7 @@
 {
     "name": "cheerio-select-tmp",
     "description": "CSS selector engine supporting jQuery selectors",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "author": "Felix Boehm <me@feedic.com>",
     "funding": "https://github.com/sponsors/fb55",
     "license": "BSD-2-Clause",
