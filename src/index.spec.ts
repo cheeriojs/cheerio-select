@@ -27,6 +27,13 @@ describe("index", () => {
         `);
     });
 
+    it("should support traversal-first queries", () => {
+        const dom = parseDOM(`<p class=a><p class=b>`) as Element[];
+        const [a, b] = dom;
+        expect(a.attribs.class).toBe("a");
+        expect(select("+.b", a)).toStrictEqual([b]);
+    });
+
     it("should filter elements", () => {
         const dom = parseDOM("<div><p>First<p>Second") as Element[];
         const ps = select("p", dom);
