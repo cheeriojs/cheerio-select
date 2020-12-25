@@ -1,5 +1,5 @@
 {
-    "name": "cheerio-select-tmp",
+    "name": "cheerio-select",
     "description": "CSS selector engine supporting jQuery selectors",
     "version": "0.1.1",
     "author": "Felix Boehm <me@feedic.com>",
