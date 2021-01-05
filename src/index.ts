@@ -125,10 +125,14 @@ function filterParsed(
 }
 
 export function select(
-    selector: string,
+    selector: string | ((el: Element) => boolean),
     root: Element | Element[],
     options: Options = {}
 ): Element[] {
+    if (typeof selector === "function") {
+        return find(root, selector);
+    }
+
     const [plain, filtered] = groupSelectors(parse(selector, options));
 
     const results: Element[][] = filtered.map((sel) =>
@@ -276,6 +280,11 @@ function findFilterElements(
           filterElements(result, [remainingSelector], remainingOpts);
 }
 
+interface CompiledQuery {
+    (el: Element): boolean;
+    shouldTestNextSiblings?: boolean;
+}
+
 function findElements(
     root: Element | Element[],
     sel: Selector[][],
@@ -284,8 +293,21 @@ function findElements(
 ): Element[] {
     if (limit === 0) return [];
 
-    // @ts-expect-error TS seems to mess up the type here ¯\_(ツ)_/¯
-    const query = compileToken<Node, Element>(sel, options, root);
+    const query: CompiledQuery = compileToken<Node, Element>(
+        sel,
+        // @ts-expect-error TS seems to mess up the type here ¯\_(ツ)_/¯
+        options,
+        root
+    );
+
+    return find(root, query, limit);
+}
+
+function find(
+    root: Element | Element[],
+    query: CompiledQuery,
+    limit = Infinity
+): Element[] {
     const elems = prepareContext<Node, Element>(
         root,
         DomUtils,
