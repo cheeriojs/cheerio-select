@@ -8,6 +8,11 @@ describe("index", () => {
         expect(select("div", dom)).toHaveLength(1);
     });
 
+    it("should find with a function", () => {
+        const dom = parseDOM("<div><p>First<p>Second") as Element[];
+        expect(select((elem) => elem.name === "p", dom)).toHaveLength(2);
+    });
+
     it("should support positionals", () => {
         const dom = parseDOM("<div><p>First<p>Second") as Element[];
         expect(select("p:first", dom)).toMatchInlineSnapshot(`
