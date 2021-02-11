@@ -1,9 +1,11 @@
 {
     "name": "cheerio-select",
     "description": "CSS selector engine supporting jQuery selectors",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "author": "Felix Boehm <me@feedic.com>",
-    "funding": "https://github.com/sponsors/fb55",
+    "funding": {
+        "url": "https://github.com/sponsors/fb55"
+    },
     "license": "BSD-2-Clause",
     "sideEffects": false,
     "repository": {
