@@ -49,5 +49,9 @@ describe("index", () => {
         expect(filter("p:first", ps)).toHaveLength(1);
         expect(filter("div p:first", ps)).toHaveLength(1);
         expect(filter("div:first p:first", ps)).toHaveLength(1);
+        expect(filter("p:nth-child(1), :last", ps)).toHaveLength(2);
+        expect(
+            filter("div p:not(:scope)", ps, { context: [ps[1]] })
+        ).toHaveLength(1);
     });
 });

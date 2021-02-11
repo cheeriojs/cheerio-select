@@ -62,17 +62,13 @@ export function filter(
     elements: Element[],
     options: Options = {}
 ): Element[] {
-    return DomUtils.uniqueSort(
-        filterParsed(parse(selector, options), elements, options)
-    ) as Element[];
+    return filterParsed(parse(selector, options), elements, options);
 }
 
 /**
  * Filter a set of elements by a selector.
  *
- * If there are multiple selectors, this can
- * return elements multiple times; use `uniqueSort`
- * to eliminate duplicates afterwards.
+ * Will return elements in the original order.
  *
  * @param selector Selector to filter by.
  * @param elements Elements to filter.
@@ -86,13 +82,31 @@ function filterParsed(
     if (elements.length === 0) return [];
 
     const [plainSelectors, filteredSelectors] = groupSelectors(selector);
-    const results = [];
+    let found: undefined | Set<Element>;
 
     if (plainSelectors.length) {
-        results.push(filterElements(elements, plainSelectors, options));
+        const filtered = filterElements(elements, plainSelectors, options);
+
+        // If there are no filters, just return
+        if (filteredSelectors.length === 0) {
+            return filtered;
+        }
+
+        // Otherwise, we have to do some filtering
+        if (filtered.length) {
+            found = new Set(filtered);
+        }
     }
 
-    for (const filteredSelector of filteredSelectors) {
+    for (let i = 0; i < filteredSelectors.length; i++) {
+        const filteredSelector = filteredSelectors[i];
+        const missing = found
+            ? elements.filter((e) => !found!.has(e))
+            : elements;
+
+        if (missing.length === 0) break;
+        let filtered: Element[];
+
         if (filteredSelector.some(isTraversal)) {
             /*
              * Get one root node, run selector with the scope
@@ -100,28 +114,42 @@ function filterParsed(
              */
             const root = getDocumentRoot(elements[0]);
             const sel = [...filteredSelector, CUSTOM_SCOPE_PSEUDO];
-            results.push(
-                findFilterElements(
-                    root as Element,
-                    sel,
-                    options,
-                    true,
-                    elements
-                )
+            filtered = findFilterElements(
+                root as Element,
+                sel,
+                options,
+                true,
+                elements
             );
         } else {
             // Performance optimization: If we don't have to traverse, just filter set.
-            results.push(
-                findFilterElements(elements, filteredSelector, options, false)
+            filtered = findFilterElements(
+                elements,
+                filteredSelector,
+                options,
+                false
             );
+        }
+
+        if (!found) {
+            /*
+             * If we haven't found anything before the last selector,
+             * just return what we found now.
+             */
+            if (i === filteredSelectors.length - 1) {
+                return filtered;
+            }
+            if (filtered.length) {
+                found = new Set(filtered);
+            }
+        } else if (filtered.length) {
+            filtered.forEach((el) => found!.add(el));
         }
     }
 
-    if (results.length === 1) {
-        return results[0];
-    }
-
-    return results.reduce((arr, rest) => [...arr, ...rest], []);
+    return typeof found !== "undefined"
+        ? elements.filter((el) => found!.has(el))
+        : [];
 }
 
 export function select(
