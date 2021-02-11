@@ -13,6 +13,13 @@ describe("index", () => {
         expect(select((elem) => elem.name === "p", dom)).toHaveLength(2);
     });
 
+    it("should ignore positionals without numbers", () => {
+        const dom = parseDOM("<div><p>First<p>Second") as Element[];
+        expect(select(":eq(e)", dom)).toHaveLength(0);
+        expect(select(":lt(e)", dom)).toHaveLength(0);
+        expect(select(":gt(e)", dom)).toHaveLength(0);
+    });
+
     it("should support positionals", () => {
         const dom = parseDOM("<div><p>First<p>Second") as Element[];
         expect(select("p:first", dom)).toMatchInlineSnapshot(`
@@ -25,6 +32,17 @@ describe("index", () => {
 
         expect(select("p:last", dom)).toMatchInlineSnapshot(`
             Array [
+              <p>
+                Second
+              </p>,
+            ]
+        `);
+
+        expect(select("p:lt(-1)", dom)).toMatchInlineSnapshot(`
+            Array [
+              <p>
+                First
+              </p>,
               <p>
                 Second
               </p>,
