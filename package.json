@@ -38,7 +38,7 @@
         "css-what": "^4.0.0",
         "domelementtype": "^2.1.0",
         "domhandler": "^4.0.0",
-        "domutils": "^2.4.4"
+        "domutils": "^2.5.2"
     },
     "devDependencies": {
         "@types/jest": "^26.0.19",
