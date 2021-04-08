@@ -9,6 +9,9 @@ import type { Element, Node } from "domhandler";
 import { getDocumentRoot, groupSelectors } from "./helpers";
 import { Filter, isFilter, CheerioSelector, getLimit } from "./positionals";
 
+// Re-export pseudo extension points
+export { filters, pseudos, aliases } from "css-select";
+
 /** Used to indicate a scope should be filtered. Might be ignored when filtering. */
 const SCOPE_PSEUDO: PseudoSelector = {
     type: "pseudo",
