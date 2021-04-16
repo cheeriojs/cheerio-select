@@ -97,7 +97,7 @@ function filterByPosition(
 
 export function filter(
     selector: string,
-    elements: Element[],
+    elements: Node[],
     options: Options = {}
 ): Element[] {
     return filterParsed(parse(selector, options), elements, options);
@@ -114,9 +114,9 @@ export function filter(
  */
 function filterParsed(
     selector: Selector[][],
-    elements: Element[],
+    elements: Node[],
     options: Options
-) {
+): Element[] {
     if (elements.length === 0) return [];
 
     const [plainSelectors, filteredSelectors] = groupSelectors(selector);
@@ -143,7 +143,7 @@ function filterParsed(
     ) {
         const filteredSelector = filteredSelectors[i];
         const missing = found
-            ? elements.filter((e) => !found!.has(e))
+            ? elements.filter((e) => DomUtils.isTag(e) && !found!.has(e))
             : elements;
 
         if (missing.length === 0) break;
@@ -167,15 +167,17 @@ function filterParsed(
     }
 
     return typeof found !== "undefined"
-        ? found.size === elements.length
-            ? elements
-            : elements.filter((el) => found!.has(el))
+        ? ((found.size === elements.length
+              ? elements
+              : elements.filter((el) =>
+                    (found as Set<Node>).has(el)
+                )) as Element[])
         : [];
 }
 
 function filterBySelector(
     selector: Selector[],
-    elements: Element[],
+    elements: Node[],
     options: Options
 ) {
     if (selector.some(isTraversal)) {

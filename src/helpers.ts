@@ -1,8 +1,8 @@
-import type { NodeWithChildren } from "domhandler";
+import type { Node } from "domhandler";
 import type { Selector } from "css-what";
 import { isFilter } from "./positionals";
 
-export function getDocumentRoot(node: NodeWithChildren): NodeWithChildren {
+export function getDocumentRoot(node: Node): Node {
     while (node.parent) node = node.parent;
     return node;
 }
