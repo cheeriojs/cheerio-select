@@ -108,51 +108,47 @@ function filterParsed(
             : elements;
 
         if (missing.length === 0) break;
-        let filtered: Element[];
+        const filtered = filterBySelector(filteredSelector, elements, options);
 
-        if (filteredSelector.some(isTraversal)) {
-            /*
-             * Get one root node, run selector with the scope
-             * set to all of our nodes.
-             */
-            const root = getDocumentRoot(elements[0]);
-            const sel = [...filteredSelector, CUSTOM_SCOPE_PSEUDO];
-            filtered = findFilterElements(
-                root as Element,
-                sel,
-                options,
-                true,
-                elements
-            );
-        } else {
-            // Performance optimization: If we don't have to traverse, just filter set.
-            filtered = findFilterElements(
-                elements,
-                filteredSelector,
-                options,
-                false
-            );
-        }
+        if (filtered.length) {
+            if (!found) {
+                /*
+                 * If we haven't found anything before the last selector,
+                 * just return what we found now.
+                 */
+                if (i === filteredSelectors.length - 1) {
+                    return filtered;
+                }
 
-        if (!found) {
-            /*
-             * If we haven't found anything before the last selector,
-             * just return what we found now.
-             */
-            if (i === filteredSelectors.length - 1) {
-                return filtered;
-            }
-            if (filtered.length) {
                 found = new Set(filtered);
+            } else {
+                filtered.forEach((el) => found!.add(el));
             }
-        } else if (filtered.length) {
-            filtered.forEach((el) => found!.add(el));
         }
     }
 
     return typeof found !== "undefined"
         ? elements.filter((el) => found!.has(el))
         : [];
+}
+
+function filterBySelector(
+    filteredSelector: Selector[],
+    elements: Element[],
+    options: Options
+) {
+    if (filteredSelector.some(isTraversal)) {
+        /*
+         * Get one root node, run selector with the scope
+         * set to all of our nodes.
+         */
+        const root = getDocumentRoot(elements[0]);
+        const sel = [...filteredSelector, CUSTOM_SCOPE_PSEUDO];
+        return findFilterElements(root, sel, options, true, elements);
+    }
+
+    // Performance optimization: If we don't have to traverse, just filter set.
+    return findFilterElements(elements, filteredSelector, options, false);
 }
 
 export function select(
@@ -181,9 +177,7 @@ export function select(
     }
 
     // Sort results, filtering for duplicates
-    return DomUtils.uniqueSort(
-        results.reduce((a, b) => [...a, ...b])
-    ) as Element[];
+    return DomUtils.uniqueSort(results.reduce((a, b) => [...a, ...b]));
 }
 
 // Traversals that are treated differently in css-select.
@@ -202,7 +196,7 @@ function includesScopePseudo(t: Selector): boolean {
 function addContextIfScope(
     selector: Selector[],
     options: Options,
-    scopeContext?: Element[]
+    scopeContext?: Node[]
 ) {
     return scopeContext && selector.some(includesScopePseudo)
         ? { ...options, context: scopeContext }
@@ -218,15 +212,15 @@ function addContextIfScope(
  * @param scopeContext Optional context for a :scope.
  */
 function findFilterElements(
-    root: Element | Element[],
+    root: Node | Node[],
     selector: Selector[],
     options: Options,
     queryForSelector: boolean,
-    scopeContext?: Element[]
+    scopeContext?: Node[]
 ): Element[] {
     const filterIndex = selector.findIndex(isFilter);
     const sub = selector.slice(0, filterIndex);
-    const filter: CheerioSelector = selector[filterIndex] as CheerioSelector;
+    const filter = selector[filterIndex] as CheerioSelector;
 
     /*
      * Set the number of elements to retrieve.
@@ -246,13 +240,10 @@ function findFilterElements(
         sub.length === 0 && !Array.isArray(root)
             ? DomUtils.getChildren(root).filter(DomUtils.isTag)
             : sub.length === 0 || (sub.length === 1 && sub[0] === SCOPE_PSEUDO)
-            ? Array.isArray(root)
-                ? root
-                : [root]
+            ? (Array.isArray(root) ? root : [root]).filter(DomUtils.isTag)
             : queryForSelector || sub.some(isTraversal)
             ? findElements(root, [sub], subOpts, limit)
-            : // We know that this cannot be reached with root not being an array.
-              filterElements(root as Element[], [sub], subOpts);
+            : filterElements(root, [sub], subOpts);
 
     const elems = elemsNoLimit.slice(0, limit);
 
@@ -317,7 +308,7 @@ interface CompiledQuery {
 }
 
 function findElements(
-    root: Element | Element[],
+    root: Node | Node[],
     sel: Selector[][],
     options: Options,
     limit: number
@@ -326,7 +317,6 @@ function findElements(
 
     const query: CompiledQuery = compileToken<Node, Element>(
         sel,
-        // @ts-expect-error TS seems to mess up the type here ¯\_(ツ)_/¯
         options,
         root
     );
@@ -335,7 +325,7 @@ function findElements(
 }
 
 function find(
-    root: Element | Element[],
+    root: Node | Node[],
     query: CompiledQuery,
     limit = Infinity
 ): Element[] {
@@ -354,11 +344,16 @@ function find(
 }
 
 function filterElements(
-    elements: Element[],
+    elements: Node | Node[],
     sel: Selector[][],
     options: Options
 ): Element[] {
-    // @ts-expect-error TS seems to mess up the type here ¯\_(ツ)_/¯
+    const els = (Array.isArray(elements) ? elements : [elements]).filter(
+        DomUtils.isTag
+    );
+
+    if (els.length === 0) return els;
+
     const query = compileToken<Node, Element>(sel, options);
-    return elements.filter(query);
+    return els.filter(query);
 }
