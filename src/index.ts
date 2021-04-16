@@ -1,5 +1,6 @@
 import { parse, Selector, PseudoSelector, isTraversal } from "css-what";
 import {
+    is as plainIs,
     _compileToken as compileToken,
     Options as CSSSelectOptions,
     prepareContext,
@@ -23,6 +24,40 @@ const CUSTOM_SCOPE_PSEUDO: PseudoSelector = { ...SCOPE_PSEUDO };
 const UNIVERSAL_SELECTOR: Selector = { type: "universal", namespace: null };
 
 export type Options = CSSSelectOptions<Node, Element>;
+
+export function is(
+    element: Element,
+    selector: string | ((el: Element) => boolean),
+    options: Options = {}
+): boolean {
+    if (typeof selector === "function") return selector(element);
+
+    const [plain, filtered] = groupSelectors(parse(selector, options));
+
+    return (
+        (plain.length > 0 && plainIs(element, plain, options)) ||
+        filtered.some(
+            (sel) => filterBySelector(sel, [element], options).length > 0
+        )
+    );
+}
+
+export function some(
+    elements: Element[],
+    selector: string | ((el: Element) => boolean),
+    options: Options = {}
+): boolean {
+    if (typeof selector === "function") return elements.some(selector);
+
+    const [plain, filtered] = groupSelectors(parse(selector, options));
+
+    return (
+        (plain.length > 0 && elements.some(compileToken(plain, options))) ||
+        filtered.some(
+            (sel) => filterBySelector(sel, elements, options).length > 0
+        )
+    );
+}
 
 function filterByPosition(
     filter: Filter,
@@ -101,7 +136,11 @@ function filterParsed(
         }
     }
 
-    for (let i = 0; i < filteredSelectors.length; i++) {
+    for (
+        let i = 0;
+        i < filteredSelectors.length && found?.size !== elements.length;
+        i++
+    ) {
         const filteredSelector = filteredSelectors[i];
         const missing = found
             ? elements.filter((e) => !found!.has(e))
@@ -128,32 +167,33 @@ function filterParsed(
     }
 
     return typeof found !== "undefined"
-        ? elements.filter((el) => found!.has(el))
+        ? found.size === elements.length
+            ? elements
+            : elements.filter((el) => found!.has(el))
         : [];
 }
 
 function filterBySelector(
-    filteredSelector: Selector[],
+    selector: Selector[],
     elements: Element[],
     options: Options
 ) {
-    if (filteredSelector.some(isTraversal)) {
+    if (selector.some(isTraversal)) {
         /*
          * Get one root node, run selector with the scope
          * set to all of our nodes.
          */
         const root = getDocumentRoot(elements[0]);
-        const sel = [...filteredSelector, CUSTOM_SCOPE_PSEUDO];
+        const sel = [...selector, CUSTOM_SCOPE_PSEUDO];
         return findFilterElements(root, sel, options, true, elements);
     }
-
     // Performance optimization: If we don't have to traverse, just filter set.
-    return findFilterElements(elements, filteredSelector, options, false);
+    return findFilterElements(elements, selector, options, false);
 }
 
 export function select(
     selector: string | ((el: Element) => boolean),
-    root: Element | Element[],
+    root: Node | Node[],
     options: Options = {}
 ): Element[] {
     if (typeof selector === "function") {
