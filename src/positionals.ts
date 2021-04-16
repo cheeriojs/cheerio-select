@@ -10,7 +10,7 @@ export type Filter =
     | "even"
     | "odd"
     | "not";
-export const filterNames = new Set<Filter>([
+export const filterNames: Set<string> = new Set<Filter>([
     "first",
     "last",
     "eq",
@@ -19,7 +19,7 @@ export const filterNames = new Set<Filter>([
     "lt",
     "even",
     "odd",
-]) as Set<string>;
+]);
 
 export interface CheerioSelector extends PseudoSelector {
     name: Filter;
