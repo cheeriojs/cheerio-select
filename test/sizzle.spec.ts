@@ -32,7 +32,7 @@ describe("Sizzle", () => {
         expect(select("", document)).toHaveLength(0);
         // Text element as context fails silently
         expect(
-            select("div", (document.createTextNode("") as Node) as Element)
+            select("div", document.createTextNode("") as Node as Element)
         ).toStrictEqual([]);
         const form = document.getElementById("form");
         // Empty string passed to matchesSelector does not match
