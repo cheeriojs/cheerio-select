@@ -5,9 +5,8 @@ describe("helpers", () => {
     describe("groupSelectors", () => {
         it("should group selectors", () => {
             const selector = parse("foo, bar, baz, :first, :last");
-            const [plainSelectors, filteredSelectors] = groupSelectors(
-                selector
-            );
+            const [plainSelectors, filteredSelectors] =
+                groupSelectors(selector);
 
             expect(plainSelectors).toHaveLength(3);
             expect(filteredSelectors).toHaveLength(2);
@@ -17,9 +16,8 @@ describe("helpers", () => {
             const selector = parse(
                 "foo, bar, baz, :not(:last), :not(:not(:first))"
             );
-            const [plainSelectors, filteredSelectors] = groupSelectors(
-                selector
-            );
+            const [plainSelectors, filteredSelectors] =
+                groupSelectors(selector);
 
             expect(plainSelectors).toHaveLength(3);
             expect(filteredSelectors).toHaveLength(2);
