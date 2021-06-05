@@ -1,6 +1,5 @@
 import { parse, Selector, PseudoSelector, isTraversal } from "css-what";
 import {
-    is as plainIs,
     _compileToken as compileToken,
     Options as CSSSelectOptions,
     prepareContext,
@@ -30,16 +29,7 @@ export function is(
     selector: string | ((el: Element) => boolean),
     options: Options = {}
 ): boolean {
-    if (typeof selector === "function") return selector(element);
-
-    const [plain, filtered] = groupSelectors(parse(selector, options));
-
-    return (
-        (plain.length > 0 && plainIs(element, plain, options)) ||
-        filtered.some(
-            (sel) => filterBySelector(sel, [element], options).length > 0
-        )
-    );
+    return some([element], selector, options);
 }
 
 export function some(
