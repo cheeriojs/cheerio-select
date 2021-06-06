@@ -5,7 +5,7 @@ import {
     prepareContext,
 } from "css-select";
 import * as DomUtils from "domutils";
-import type { Element, Node } from "domhandler";
+import type { Element, Node, Document } from "domhandler";
 import { getDocumentRoot, groupSelectors } from "./helpers";
 import { Filter, isFilter, CheerioSelector, getLimit } from "./positionals";
 
@@ -22,7 +22,10 @@ const SCOPE_PSEUDO: PseudoSelector = {
 const CUSTOM_SCOPE_PSEUDO: PseudoSelector = { ...SCOPE_PSEUDO };
 const UNIVERSAL_SELECTOR: Selector = { type: "universal", namespace: null };
 
-export type Options = CSSSelectOptions<Node, Element>;
+export interface Options extends CSSSelectOptions<Node, Element> {
+    /** Optional reference to the root of the document. If not set, this will be computed when needed. */
+    root?: Document;
+}
 
 export function is(
     element: Element,
@@ -159,7 +162,8 @@ function filterParsed(
     return typeof found !== "undefined"
         ? ((found.size === elements.length
               ? elements
-              : elements.filter((el) =>
+              : // Filter elements to preserve order
+                elements.filter((el) =>
                     (found as Set<Node>).has(el)
                 )) as Element[])
         : [];
@@ -172,10 +176,10 @@ function filterBySelector(
 ) {
     if (selector.some(isTraversal)) {
         /*
-         * Get one root node, run selector with the scope
+         * Get root node, run selector with the scope
          * set to all of our nodes.
          */
-        const root = getDocumentRoot(elements[0]);
+        const root = options.root ?? getDocumentRoot(elements[0]);
         const sel = [...selector, CUSTOM_SCOPE_PSEUDO];
         return findFilterElements(root, sel, options, true, elements);
     }
