@@ -43,7 +43,7 @@
     "devDependencies": {
         "@types/jest": "^26.0.24",
         "@typescript-eslint/eslint-plugin": "^4.28.2",
-        "@typescript-eslint/parser": "^4.28.2",
+        "@typescript-eslint/parser": "^4.28.3",
         "eslint": "^7.30.0",
         "eslint-config-prettier": "^8.3.0",
         "htmlparser2": "^6.1.0",
