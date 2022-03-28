@@ -216,6 +216,10 @@ export function select(
         results.push(findElements(root, plain, options, Infinity));
     }
 
+    if (results.length === 0) {
+        return [];
+    }
+
     // If there was only a single selector, just return the result
     if (results.length === 1) {
         return results[0];
