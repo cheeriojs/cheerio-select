@@ -1,4 +1,10 @@
-import { parse, Selector, PseudoSelector, isTraversal } from "css-what";
+import {
+    parse,
+    Selector,
+    SelectorType,
+    PseudoSelector,
+    isTraversal,
+} from "css-what";
 import {
     _compileToken as compileToken,
     Options as CSSSelectOptions,
@@ -14,13 +20,16 @@ export { filters, pseudos, aliases } from "css-select";
 
 /** Used to indicate a scope should be filtered. Might be ignored when filtering. */
 const SCOPE_PSEUDO: PseudoSelector = {
-    type: "pseudo",
+    type: SelectorType.Pseudo,
     name: "scope",
     data: null,
 };
 /** Used for actually filtering for scope. */
 const CUSTOM_SCOPE_PSEUDO: PseudoSelector = { ...SCOPE_PSEUDO };
-const UNIVERSAL_SELECTOR: Selector = { type: "universal", namespace: null };
+const UNIVERSAL_SELECTOR: Selector = {
+    type: SelectorType.Universal,
+    namespace: null,
+};
 
 export interface Options extends CSSSelectOptions<Node, Element> {
     /** Optional reference to the root of the document. If not set, this will be computed when needed. */
@@ -42,7 +51,7 @@ export function some(
 ): boolean {
     if (typeof selector === "function") return elements.some(selector);
 
-    const [plain, filtered] = groupSelectors(parse(selector, options));
+    const [plain, filtered] = groupSelectors(parse(selector));
 
     return (
         (plain.length > 0 && elements.some(compileToken(plain, options))) ||
@@ -93,7 +102,7 @@ export function filter(
     elements: Node[],
     options: Options = {}
 ): Element[] {
-    return filterParsed(parse(selector, options), elements, options);
+    return filterParsed(parse(selector), elements, options);
 }
 
 /**
@@ -196,7 +205,7 @@ export function select(
         return find(root, selector);
     }
 
-    const [plain, filtered] = groupSelectors(parse(selector, options));
+    const [plain, filtered] = groupSelectors(parse(selector));
 
     const results: Element[][] = filtered.map((sel) =>
         findFilterElements(root, sel, options, true)
@@ -205,6 +214,10 @@ export function select(
     // Plain selectors can be queried in a single go
     if (plain.length) {
         results.push(findElements(root, plain, options, Infinity));
+    }
+
+    if (results.length === 0) {
+        return [];
     }
 
     // If there was only a single selector, just return the result
@@ -217,7 +230,10 @@ export function select(
 }
 
 // Traversals that are treated differently in css-select.
-const specialTraversal = new Set<Selector["type"]>(["descendant", "adjacent"]);
+const specialTraversal = new Set<SelectorType>([
+    SelectorType.Descendant,
+    SelectorType.Adjacent,
+]);
 
 function includesScopePseudo(t: Selector): boolean {
     return (

@@ -34,8 +34,8 @@
         "prepare": "npm run build"
     },
     "dependencies": {
-        "css-select": "^4.2.1",
-        "css-what": "^5.1.0",
+        "css-select": "^4.3.0",
+        "css-what": "^6.0.1",
         "domelementtype": "^2.2.0",
         "domhandler": "^4.3.1",
         "domutils": "^2.8.0"
