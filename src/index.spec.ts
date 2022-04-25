@@ -53,7 +53,7 @@ describe("index", () => {
     it("should support traversal-first queries", () => {
         const dom = parseDocument(`<p class=a><p class=b>`);
         const [a, b] = dom.children;
-        expect((a as Element).attribs.class).toBe("a");
+        expect(a).toMatchObject({ attribs: { class: "a" } });
         expect(select("+.b", a)).toStrictEqual([b]);
     });
 

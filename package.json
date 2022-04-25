@@ -34,20 +34,20 @@
         "prepare": "npm run build"
     },
     "dependencies": {
-        "css-select": "^4.3.0",
+        "css-select": "^5.0.0",
         "css-what": "^6.1.0",
         "domelementtype": "^2.3.0",
-        "domhandler": "^4.3.1",
-        "domutils": "^2.8.0"
+        "domhandler": "^5.0.2",
+        "domutils": "^3.0.1"
     },
     "devDependencies": {
         "@types/jest": "^27.4.1",
         "@types/node": "^17.0.25",
         "@typescript-eslint/eslint-plugin": "^5.20.0",
         "@typescript-eslint/parser": "^5.20.0",
-        "eslint": "^8.13.0",
+        "eslint": "^8.14.0",
         "eslint-config-prettier": "^8.5.0",
-        "htmlparser2": "^7.2.0",
+        "htmlparser2": "^8.0.0",
         "jest": "^27.5.1",
         "prettier": "^2.6.2",
         "ts-jest": "^27.1.4",

@@ -3,19 +3,19 @@ import fs from "fs";
 import path from "path";
 import * as htmlparser2 from "htmlparser2";
 import * as DomUtils from "domutils";
-import { DataNode, Element, Node } from "domhandler";
+import { Text, Element, AnyNode } from "domhandler";
 
 function getDOMFromPath(
     file: string,
     options?: htmlparser2.ParserOptions
-): Node[] {
+): AnyNode[] {
     const filePath = path.join(__dirname, "..", "fixtures", file);
     return htmlparser2.parseDOM(fs.readFileSync(filePath, "utf8"), options);
 }
 
 export interface SimpleDocument extends Array<Element> {
     getElementById(id: string): Element;
-    createTextNode(content: string): DataNode;
+    createTextNode(content: string): Text;
     createElement(name: string): Element;
     body: Element;
     documentElement: Element;
@@ -26,8 +26,7 @@ export function getDocument(file: string): SimpleDocument {
 
     document.getElementById = (id: string) =>
         DomUtils.getElementById(id, document) as Element;
-    document.createTextNode = (content: string) =>
-        new DataNode(htmlparser2.ElementType.Text, content);
+    document.createTextNode = (content: string) => new Text(content);
     document.createElement = (name: string) =>
         new Element(name.toLocaleLowerCase(), {});
     [document.body] = DomUtils.getElementsByTagName("body", document, true, 1);
@@ -62,7 +61,7 @@ export function q(...ids: string[]): Element[] {
 export function t(
     selector: string,
     expectedIds: string[],
-    context: Node[] | Node = document
+    context: AnyNode[] | AnyNode = document
 ): void {
     const actual = select(
         selector,
