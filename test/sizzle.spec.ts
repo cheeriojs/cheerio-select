@@ -1,6 +1,6 @@
 import * as DomUtils from "domutils";
 import { select, filter, Options } from "../src";
-import type { Node, Element } from "domhandler";
+import type { AnyNode, Element } from "domhandler";
 import { q, t, createWithFriesXML, loadDoc } from "./tools/sizzle-testinit";
 import { parseDOM } from "htmlparser2";
 let document = loadDoc();
@@ -10,7 +10,7 @@ function getDOM(str: string) {
 }
 
 function matchesSelector(
-    element: Node,
+    element: AnyNode,
     selector: string,
     options?: Options
 ): boolean {
@@ -32,7 +32,7 @@ describe("Sizzle", () => {
         expect(select("", document)).toHaveLength(0);
         // Text element as context fails silently
         expect(
-            select("div", document.createTextNode("") as Node as Element)
+            select("div", document.createTextNode("") as AnyNode as Element)
         ).toStrictEqual([]);
         const form = document.getElementById("form");
         // Empty string passed to matchesSelector does not match
@@ -45,7 +45,7 @@ describe("Sizzle", () => {
         // Select all
         expect(select("*", document).length >= 30).toBe(true);
         const all = select("*", document);
-        const good = all.every((el) => el.nodeType !== 8);
+        const good = all.every((el: AnyNode) => el.nodeType !== 8);
         // Select all elements, no comment nodes
         expect(good).toBe(true);
         // Element Selector

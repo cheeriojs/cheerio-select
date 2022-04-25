@@ -11,7 +11,7 @@ import {
     prepareContext,
 } from "css-select";
 import * as DomUtils from "domutils";
-import type { Element, Node, Document } from "domhandler";
+import type { Element, AnyNode, Document } from "domhandler";
 import { getDocumentRoot, groupSelectors } from "./helpers";
 import { Filter, isFilter, CheerioSelector, getLimit } from "./positionals";
 
@@ -31,7 +31,7 @@ const UNIVERSAL_SELECTOR: Selector = {
     namespace: null,
 };
 
-export interface Options extends CSSSelectOptions<Node, Element> {
+export interface Options extends CSSSelectOptions<AnyNode, Element> {
     /** Optional reference to the root of the document. If not set, this will be computed when needed. */
     root?: Document;
 }
@@ -99,7 +99,7 @@ function filterByPosition(
 
 export function filter(
     selector: string,
-    elements: Node[],
+    elements: AnyNode[],
     options: Options = {}
 ): Element[] {
     return filterParsed(parse(selector), elements, options);
@@ -116,7 +116,7 @@ export function filter(
  */
 function filterParsed(
     selector: Selector[][],
-    elements: Node[],
+    elements: AnyNode[],
     options: Options
 ): Element[] {
     if (elements.length === 0) return [];
@@ -173,14 +173,14 @@ function filterParsed(
               ? elements
               : // Filter elements to preserve order
                 elements.filter((el) =>
-                    (found as Set<Node>).has(el)
+                    (found as Set<AnyNode>).has(el)
                 )) as Element[])
         : [];
 }
 
 function filterBySelector(
     selector: Selector[],
-    elements: Node[],
+    elements: AnyNode[],
     options: Options
 ) {
     if (selector.some(isTraversal)) {
@@ -198,7 +198,7 @@ function filterBySelector(
 
 export function select(
     selector: string | ((el: Element) => boolean),
-    root: Node | Node[],
+    root: AnyNode | AnyNode[],
     options: Options = {}
 ): Element[] {
     if (typeof selector === "function") {
@@ -248,7 +248,7 @@ function includesScopePseudo(t: Selector): boolean {
 function addContextIfScope(
     selector: Selector[],
     options: Options,
-    scopeContext?: Node[]
+    scopeContext?: AnyNode[]
 ) {
     return scopeContext && selector.some(includesScopePseudo)
         ? { ...options, context: scopeContext }
@@ -264,11 +264,11 @@ function addContextIfScope(
  * @param scopeContext Optional context for a :scope.
  */
 function findFilterElements(
-    root: Node | Node[],
+    root: AnyNode | AnyNode[],
     selector: Selector[],
     options: Options,
     queryForSelector: boolean,
-    scopeContext?: Node[]
+    scopeContext?: AnyNode[]
 ): Element[] {
     const filterIndex = selector.findIndex(isFilter);
     const sub = selector.slice(0, filterIndex);
@@ -360,14 +360,14 @@ interface CompiledQuery {
 }
 
 function findElements(
-    root: Node | Node[],
+    root: AnyNode | AnyNode[],
     sel: Selector[][],
     options: Options,
     limit: number
 ): Element[] {
     if (limit === 0) return [];
 
-    const query: CompiledQuery = compileToken<Node, Element>(
+    const query: CompiledQuery = compileToken<AnyNode, Element>(
         sel,
         options,
         root
@@ -377,18 +377,18 @@ function findElements(
 }
 
 function find(
-    root: Node | Node[],
+    root: AnyNode | AnyNode[],
     query: CompiledQuery,
     limit = Infinity
 ): Element[] {
-    const elems = prepareContext<Node, Element>(
+    const elems = prepareContext<AnyNode, Element>(
         root,
         DomUtils,
         query.shouldTestNextSiblings
     );
 
     return DomUtils.find(
-        (node: Node) => DomUtils.isTag(node) && query(node),
+        (node: AnyNode) => DomUtils.isTag(node) && query(node),
         elems,
         true,
         limit
@@ -396,7 +396,7 @@ function find(
 }
 
 function filterElements(
-    elements: Node | Node[],
+    elements: AnyNode | AnyNode[],
     sel: Selector[][],
     options: Options
 ): Element[] {
@@ -406,6 +406,6 @@ function filterElements(
 
     if (els.length === 0) return els;
 
-    const query = compileToken<Node, Element>(sel, options);
+    const query = compileToken<AnyNode, Element>(sel, options);
     return els.filter(query);
 }
