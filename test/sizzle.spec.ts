@@ -1639,7 +1639,7 @@ describe("Sizzle", () => {
     });
 
     it("child and adjacent - position", () => {
-        expect.assertions(5);
+        expect.assertions(6);
 
         // Element Preceded By positional with a context.
         t(
@@ -1650,6 +1650,9 @@ describe("Sizzle", () => {
         // Find by general sibling combinator (#8310)
         expect(
             select("#listWithTabIndex li:eq(2) ~ li", document)
+        ).toHaveLength(1);
+        expect(
+            select("#listWithTabIndex li:eq(2) ~ li:lt(100)", document)
         ).toHaveLength(1);
         const nothiddendiv = document.getElementById("nothiddendiv");
         // Verify child context positional selector

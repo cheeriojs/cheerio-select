@@ -18,17 +18,15 @@ import { Filter, isFilter, CheerioSelector, getLimit } from "./positionals";
 // Re-export pseudo extension points
 export { filters, pseudos, aliases } from "css-select";
 
-/** Used to indicate a scope should be filtered. Might be ignored when filtering. */
+const CHEERIO_SELECT_SCOPE: PseudoSelector = {
+    type: SelectorType.Pseudo,
+    name: "cheerio-select-scope",
+    data: null,
+};
 const SCOPE_PSEUDO: PseudoSelector = {
     type: SelectorType.Pseudo,
     name: "scope",
     data: null,
-};
-/** Used for actually filtering for scope. */
-const CUSTOM_SCOPE_PSEUDO: PseudoSelector = { ...SCOPE_PSEUDO };
-const UNIVERSAL_SELECTOR: Selector = {
-    type: SelectorType.Universal,
-    namespace: null,
 };
 
 export interface Options extends CSSSelectOptions<AnyNode, Element> {
@@ -189,7 +187,7 @@ function filterBySelector(
          * set to all of our nodes.
          */
         const root = options.root ?? getDocumentRoot(elements[0]);
-        const sel = [...selector, CUSTOM_SCOPE_PSEUDO];
+        const sel = [...selector, SCOPE_PSEUDO];
         return findFilterElements(root, sel, options, true, elements);
     }
     // Performance optimization: If we don't have to traverse, just filter set.
@@ -230,14 +228,13 @@ export function select(
 }
 
 // Traversals that are treated differently in css-select.
-const specialTraversal = new Set<SelectorType>([
-    SelectorType.Descendant,
+const siblingTraversal = new Set<SelectorType>([
+    SelectorType.Sibling,
     SelectorType.Adjacent,
 ]);
 
 function includesScopePseudo(t: Selector): boolean {
     return (
-        t !== SCOPE_PSEUDO &&
         t.type === "pseudo" &&
         (t.name === "scope" ||
             (Array.isArray(t.data) &&
@@ -253,6 +250,22 @@ function addContextIfScope(
     return scopeContext && selector.some(includesScopePseudo)
         ? { ...options, context: scopeContext }
         : options;
+}
+
+/**
+ * Adds a custom cheerio-select-scope token in front of the remaining
+ * selector, to make sure traversals don't match elements that aren't a
+ * part of the considered tree.
+ */
+function addCheerioSelectPseudo(options: Options, nodes: Element[]) {
+    return {
+        ...options,
+        relativeSelector: false,
+        pseudos: {
+            ...options.pseudos,
+            "cheerio-select-scope": (el: Element) => nodes.includes(el),
+        },
+    };
 }
 
 /**
@@ -291,7 +304,8 @@ function findFilterElements(
     const elemsNoLimit =
         sub.length === 0 && !Array.isArray(root)
             ? DomUtils.getChildren(root).filter(DomUtils.isTag)
-            : sub.length === 0 || (sub.length === 1 && sub[0] === SCOPE_PSEUDO)
+            : sub.length === 0 ||
+              (sub.length === 1 && sub[0] === CHEERIO_SELECT_SCOPE)
             ? (Array.isArray(root) ? root : [root]).filter(DomUtils.isTag)
             : queryForSelector || sub.some(isTraversal)
             ? findElements(root, [sub], subOpts, limit)
@@ -299,7 +313,7 @@ function findFilterElements(
 
     const elems = elemsNoLimit.slice(0, limit);
 
-    const result = filterByPosition(filter.name, elems, filter.data, options);
+    let result = filterByPosition(filter.name, elems, filter.data, options);
 
     if (result.length === 0 || selector.length === filterIndex + 1) {
         return result;
@@ -308,28 +322,21 @@ function findFilterElements(
     const remainingSelector = selector.slice(filterIndex + 1);
     const remainingHasTraversal = remainingSelector.some(isTraversal);
 
-    const remainingOpts = addContextIfScope(
+    let remainingOpts = addContextIfScope(
         remainingSelector,
         options,
         scopeContext
     );
 
     if (remainingHasTraversal) {
-        /*
-         * Some types of traversals have special logic when they start a selector
-         * in css-select. If this is the case, add a universal selector in front of
-         * the selector to avoid this behavior.
-         */
-        if (specialTraversal.has(remainingSelector[0].type)) {
-            remainingSelector.unshift(UNIVERSAL_SELECTOR);
-        }
+        remainingSelector.unshift(CHEERIO_SELECT_SCOPE);
 
-        /*
-         * Add a scope token in front of the remaining selector,
-         * to make sure traversals don't match elements that aren't a
-         * part of the considered tree.
-         */
-        remainingSelector.unshift(SCOPE_PSEUDO);
+        // Add `:cheerio-select-scope` pseudo
+        remainingOpts = addCheerioSelectPseudo(remainingOpts, result);
+        if (siblingTraversal.has(remainingSelector[1].type)) {
+            // If we have a sibling traversal, we need to also look at the siblings.
+            result = prepareContext(result, DomUtils, true) as Element[];
+        }
     }
 
     /*
@@ -343,7 +350,7 @@ function findFilterElements(
         ? findFilterElements(
               result,
               remainingSelector,
-              options,
+              remainingOpts,
               false,
               scopeContext
           )
