@@ -107,4 +107,14 @@ describe("index", () => {
         expect(some(ps, "div p:not(:scope)", { context: [ps[1]] })).toBe(true);
         expect(some(ps, "div p:not(:scope)", { context: ps })).toBe(false);
     });
+
+    it("should support trailing selectors (https://github.com/cheeriojs/cheerio/issues/2450)", () => {
+        const dom = parseDocument("<ul><li>One</li><li>Two</li></ul>");
+        expect(select("ul li", dom)).toHaveLength(2);
+        expect(select("ul li:lt(3)", dom)).toHaveLength(2);
+        expect(select("ul:first li", dom, { context: [dom] })).toHaveLength(2);
+        expect(
+            select("ul:first li:lt(3)", dom, { context: [dom] })
+        ).toHaveLength(2);
+    });
 });
