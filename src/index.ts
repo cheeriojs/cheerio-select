@@ -1,29 +1,28 @@
-import {
-    parse,
-    Selector,
-    SelectorType,
-    PseudoSelector,
-    isTraversal,
-} from "css-what";
+import { parse, type Selector, SelectorType, isTraversal } from "css-what";
 import {
     _compileToken as compileToken,
-    Options as CSSSelectOptions,
+    type Options as CSSSelectOptions,
     prepareContext,
 } from "css-select";
 import * as DomUtils from "domutils";
+import * as boolbase from "boolbase";
 import type { Element, AnyNode, Document } from "domhandler";
 import { getDocumentRoot, groupSelectors } from "./helpers";
-import { Filter, isFilter, CheerioSelector, getLimit } from "./positionals";
+import {
+    type Filter,
+    isFilter,
+    type CheerioSelector,
+    getLimit,
+} from "./positionals";
 
 // Re-export pseudo extension points
 export { filters, pseudos, aliases } from "css-select";
 
-const CHEERIO_SELECT_SCOPE: PseudoSelector = {
-    type: SelectorType.Pseudo,
-    name: "cheerio-select-scope",
-    data: null,
+const UNIVERSAL_SELECTOR: Selector = {
+    type: SelectorType.Universal,
+    namespace: null,
 };
-const SCOPE_PSEUDO: PseudoSelector = {
+const SCOPE_PSEUDO: Selector = {
     type: SelectorType.Pseudo,
     name: "scope",
     data: null,
@@ -187,8 +186,8 @@ function filterBySelector(
          * set to all of our nodes.
          */
         const root = options.root ?? getDocumentRoot(elements[0]);
-        const sel = [...selector, SCOPE_PSEUDO];
-        return findFilterElements(root, sel, options, true, elements);
+        selector.push(SCOPE_PSEUDO);
+        return findFilterElements(root, selector, options, true, elements);
     }
     // Performance optimization: If we don't have to traverse, just filter set.
     return findFilterElements(elements, selector, options, false);
@@ -253,22 +252,6 @@ function addContextIfScope(
 }
 
 /**
- * Adds a custom cheerio-select-scope token in front of the remaining
- * selector, to make sure traversals don't match elements that aren't a
- * part of the considered tree.
- */
-function addCheerioSelectPseudo(options: Options, nodes: Element[]) {
-    return {
-        ...options,
-        relativeSelector: false,
-        pseudos: {
-            ...options.pseudos,
-            "cheerio-select-scope": (el: Element) => nodes.includes(el),
-        },
-    };
-}
-
-/**
  *
  * @param root Element(s) to search from.
  * @param selector Selector to look for.
@@ -304,8 +287,7 @@ function findFilterElements(
     const elemsNoLimit =
         sub.length === 0 && !Array.isArray(root)
             ? DomUtils.getChildren(root).filter(DomUtils.isTag)
-            : sub.length === 0 ||
-              (sub.length === 1 && sub[0] === CHEERIO_SELECT_SCOPE)
+            : sub.length === 0
             ? (Array.isArray(root) ? root : [root]).filter(DomUtils.isTag)
             : queryForSelector || sub.some(isTraversal)
             ? findElements(root, [sub], subOpts, limit)
@@ -324,19 +306,33 @@ function findFilterElements(
 
     let remainingOpts = addContextIfScope(
         remainingSelector,
-        options,
+        subOpts,
         scopeContext
     );
 
     if (remainingHasTraversal) {
-        remainingSelector.unshift(CHEERIO_SELECT_SCOPE);
+        if (isTraversal(remainingSelector[0])) {
+            if (siblingTraversal.has(remainingSelector[0].type)) {
+                // If we have a sibling traversal, we need to also look at the siblings.
+                result = prepareContext(result, DomUtils, true) as Element[];
+            }
 
-        // Add `:cheerio-select-scope` pseudo
-        remainingOpts = addCheerioSelectPseudo(remainingOpts, result);
-        if (siblingTraversal.has(remainingSelector[1].type)) {
-            // If we have a sibling traversal, we need to also look at the siblings.
-            result = prepareContext(result, DomUtils, true) as Element[];
+            // Avoid a traversal-first selector error.
+            remainingSelector.unshift(UNIVERSAL_SELECTOR);
         }
+
+        remainingOpts = {
+            ...options,
+            // Avoid absolutizing the selector
+            relativeSelector: false,
+            /*
+             * Add a custom root func, to make sure traversals don't match elements
+             * that aren't a part of the considered tree.
+             */
+            rootFunc: (el: Element) => result.includes(el),
+        };
+    } else if (remainingOpts.rootFunc) {
+        remainingOpts.rootFunc = boolbase.trueFunc;
     }
 
     /*
@@ -414,5 +410,5 @@ function filterElements(
     if (els.length === 0) return els;
 
     const query = compileToken<AnyNode, Element>(sel, options);
-    return els.filter(query);
+    return query === boolbase.trueFunc ? els : els.filter(query);
 }
