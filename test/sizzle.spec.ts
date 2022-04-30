@@ -164,7 +164,7 @@ describe("Sizzle", () => {
 
         // Real use case would be using .watch in browsers with window.watch (see Issue #157)
         const elem = document.createElement("toString");
-        elem.attribs.id = "toString";
+        elem.attribs["id"] = "toString";
         const siblings = q("qunit-fixture")[0].children;
         siblings.push(elem);
         // Element name matches Object.prototype property
@@ -325,7 +325,7 @@ describe("Sizzle", () => {
         t("#firstUL > *", []);
 
         // ID selector with same value for a name attribute
-        expect((select("#tName1", document)[0] as Element).attribs.id).toBe(
+        expect((select("#tName1", document)[0] as Element).attribs["id"]).toBe(
             "tName1"
         );
         // ID selector non-existing but name attribute on an A tag
@@ -336,9 +336,11 @@ describe("Sizzle", () => {
         t("#tName1 span", ["tName1-span"]);
         // Ending with ID
         expect(
-            (select("div > div #tName1", document)[0] as Element).attribs.id
+            (select("div > div #tName1", document)[0] as Element).attribs["id"]
         ).toBe(
-            (select("#tName1-span", document)[0]?.parent as Element).attribs.id
+            (select("#tName1-span", document)[0]?.parent as Element).attribs[
+                "id"
+            ]
         );
 
         parseDOM("<a id='backslash\\foo'></a>").forEach((node) =>
@@ -416,7 +418,7 @@ describe("Sizzle", () => {
         expect(select(".e", div)).toStrictEqual([div.children[0]]);
 
         const lastChild = div.children[div.children.length - 1] as Element;
-        lastChild.attribs.class = "e";
+        lastChild.attribs["class"] = "e";
 
         // Finding a modified class.
         expect(select(".e", div)).toStrictEqual([div.children[0], lastChild]);
@@ -425,12 +427,12 @@ describe("Sizzle", () => {
         expect(matchesSelector(div, ".null")).toBe(false);
         // .null does not match an element with no class
         expect(matchesSelector(div.children[0], ".null div")).toBe(false);
-        div.attribs.class = "null";
+        div.attribs["class"] = "null";
         // .null matches element with class 'null'
         expect(matchesSelector(div, ".null")).toBe(true);
         // Caching system respects DOM changes
         expect(matchesSelector(div.children[0], ".null div")).toBe(true);
-        lastChild.attribs.class += " hasOwnProperty toString";
+        lastChild.attribs["class"] += " hasOwnProperty toString";
         // Classes match Object.prototype properties
         expect(select(".e.hasOwnProperty.toString", div)).toStrictEqual([
             lastChild,
@@ -718,7 +720,7 @@ describe("Sizzle", () => {
         // Attribute Equals Number
         t("#qunit-fixture li[tabIndex=-1]", ["foodWithNegativeTabIndex"]);
 
-        document.getElementById("anchor2").attribs.href = "#2";
+        document.getElementById("anchor2").attribs["href"] = "#2";
         // `href` Attribute
         t("p a[href^=#]", ["anchor2"]);
         t("p a[href*=#]", ["simon1", "anchor2"]);
@@ -792,7 +794,7 @@ describe("Sizzle", () => {
         t("#ap a[hreflang!='en']", ["google", "groups", "anchor1"]);
 
         const opt = document.getElementById("option1a");
-        opt.attribs.test = "";
+        opt.attribs["test"] = "";
 
         // Attribute Is Not Equal Matches
         expect(matchesSelector(opt, "[id*=option1][type!=checkbox]")).toBe(
@@ -829,7 +831,7 @@ describe("Sizzle", () => {
         t("input[name='foo[bar]']", ["hidden2"]);
 
         const input = document.getElementById("text1");
-        input.attribs.title = "Don't click me";
+        input.attribs["title"] = "Don't click me";
 
         // Quote within attribute value does not mess up tokenizer
         expect(matchesSelector(input, 'input[title="Don\'t click me"]')).toBe(
@@ -925,9 +927,8 @@ describe("Sizzle", () => {
         t("[constructor]", []);
         // Gecko Object.prototype property "watch" (negative)',
         t("[watch]", []);
-        // @ts-expect-error TS doesn't want us to override `constructor`
-        foo.attribs.constructor = "foo";
-        foo.attribs.watch = "bar";
+        foo.attribs["constructor"] = "foo";
+        foo.attribs["watch"] = "bar";
         // Object.prototype property "constructor"',
         t("[constructor='foo']", ["foo"]);
         // Gecko Object.prototype property "watch"',
@@ -1356,7 +1357,7 @@ describe("Sizzle", () => {
         t("a:contains((Link))", ["groups"]);
 
         const tmp = document.createElement("div");
-        tmp.attribs.id = "tmp_input";
+        tmp.attribs["id"] = "tmp_input";
         document.body.children.push(tmp);
 
         ["button", "submit", "reset"].forEach((type) => {

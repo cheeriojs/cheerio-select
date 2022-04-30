@@ -21,6 +21,7 @@
         "spaced-comment": 2,
         "yoda": [2, "never"],
         "curly": [2, "multi-line"],
+        "no-constant-binary-expression": 2,
         "no-else-return": 2
     },
     "overrides": [
@@ -36,10 +37,13 @@
                 "project": "./tsconfig.eslint.json"
             },
             "rules": {
+                "dot-notation": 0,
+                "curly": [2, "multi-line"],
+
                 "@typescript-eslint/prefer-for-of": 0,
                 "@typescript-eslint/member-ordering": 0,
                 "@typescript-eslint/explicit-function-return-type": 0,
-                "@typescript-eslint/no-non-null-assertion": 0,
+                "@typescript-eslint/no-unused-vars": 0,
                 "@typescript-eslint/no-use-before-define": [
                     2,
                     { "functions": false }
