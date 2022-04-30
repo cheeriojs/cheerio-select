@@ -1,6 +1,6 @@
 import type { AnyNode } from "domhandler";
 import type { Selector } from "css-what";
-import { isFilter } from "./positionals";
+import { isFilter } from "./positionals.js";
 
 export function getDocumentRoot(node: AnyNode): AnyNode {
     while (node.parent) node = node.parent;

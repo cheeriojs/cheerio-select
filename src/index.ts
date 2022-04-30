@@ -7,13 +7,13 @@ import {
 import * as DomUtils from "domutils";
 import * as boolbase from "boolbase";
 import type { Element, AnyNode, Document } from "domhandler";
-import { getDocumentRoot, groupSelectors } from "./helpers";
+import { getDocumentRoot, groupSelectors } from "./helpers.js";
 import {
     type Filter,
     isFilter,
     type CheerioSelector,
     getLimit,
-} from "./positionals";
+} from "./positionals.js";
 
 // Re-export pseudo extension points
 export { filters, pseudos, aliases } from "css-select";
