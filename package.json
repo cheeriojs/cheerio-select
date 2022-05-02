@@ -45,7 +45,7 @@
         "css-select": "^5.1.0",
         "css-what": "^6.1.0",
         "domelementtype": "^2.3.0",
-        "domhandler": "^5.0.2",
+        "domhandler": "^5.0.3",
         "domutils": "^3.0.1"
     },
     "devDependencies": {
