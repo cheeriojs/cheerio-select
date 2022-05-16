@@ -227,12 +227,6 @@ export function select(
     return DomUtils.uniqueSort(results.reduce((a, b) => [...a, ...b]));
 }
 
-// Traversals that are treated differently in css-select.
-const siblingTraversal = new Set<SelectorType>([
-    SelectorType.Sibling,
-    SelectorType.Adjacent,
-]);
-
 /**
  *
  * @param root Element(s) to search from.
@@ -284,7 +278,12 @@ function findFilterElements(
 
     if (remainingHasTraversal) {
         if (isTraversal(remainingSelector[0])) {
-            if (siblingTraversal.has(remainingSelector[0].type)) {
+            const { type } = remainingSelector[0];
+
+            if (
+                type === SelectorType.Sibling ||
+                type === SelectorType.Adjacent
+            ) {
                 // If we have a sibling traversal, we need to also look at the siblings.
                 result = prepareContext(result, DomUtils, true) as Element[];
             }
