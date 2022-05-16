@@ -117,4 +117,17 @@ describe("index", () => {
             select("ul:first li:lt(3)", dom, { context: [dom] })
         ).toHaveLength(2);
     });
+
+    it("should support limit argument", () => {
+        const dom = parseDocument("<p>Paragraph".repeat(10));
+        expect(select("p:even", dom, {}, 1)).toHaveLength(1);
+        expect(select("p:even", dom, {}, 5)).toHaveLength(5);
+        expect(select("p:odd", dom, {}, 1)).toHaveLength(1);
+        expect(select("p:odd", dom, {}, 5)).toHaveLength(5);
+        expect(select("p:lt(5)", dom, {}, 2)).toHaveLength(2);
+        expect(select("p:lt(5)", dom, {}, 6)).toHaveLength(5);
+
+        // Should not use the limit for positionals before the end of the selector
+        expect(select("p:odd + p:eq(5)", dom, {}, 1)).toHaveLength(1);
+    });
 });

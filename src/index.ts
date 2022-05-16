@@ -188,16 +188,23 @@ function filterBySelector(
         const root = options.root ?? getDocumentRoot(elements[0]);
         const opts = { ...options, context: elements, relativeSelector: false };
         selector.push(SCOPE_PSEUDO);
-        return findFilterElements(root, selector, opts, true);
+        return findFilterElements(root, selector, opts, true, elements.length);
     }
     // Performance optimization: If we don't have to traverse, just filter set.
-    return findFilterElements(elements, selector, options, false);
+    return findFilterElements(
+        elements,
+        selector,
+        options,
+        false,
+        elements.length
+    );
 }
 
 export function select(
     selector: string | ((el: Element) => boolean),
     root: AnyNode | AnyNode[],
-    options: Options = {}
+    options: Options = {},
+    limit = Infinity
 ): Element[] {
     if (typeof selector === "function") {
         return find(root, selector);
@@ -206,12 +213,12 @@ export function select(
     const [plain, filtered] = groupSelectors(parse(selector));
 
     const results: Element[][] = filtered.map((sel) =>
-        findFilterElements(root, sel, options, true)
+        findFilterElements(root, sel, options, true, limit)
     );
 
     // Plain selectors can be queried in a single go
     if (plain.length) {
-        results.push(findElements(root, plain, options, Infinity));
+        results.push(findElements(root, plain, options, limit));
     }
 
     if (results.length === 0) {
@@ -238,17 +245,21 @@ function findFilterElements(
     root: AnyNode | AnyNode[],
     selector: Selector[],
     options: Options,
-    queryForSelector: boolean
+    queryForSelector: boolean,
+    totalLimit: number
 ): Element[] {
     const filterIndex = selector.findIndex(isFilter);
     const sub = selector.slice(0, filterIndex);
     const filter = selector[filterIndex] as CheerioSelector;
+    // If we are at the end of the selector, we can limit the number of elements to retrieve.
+    const partLimit =
+        selector.length - 1 === filterIndex ? totalLimit : Infinity;
 
     /*
      * Set the number of elements to retrieve.
      * Eg. for :first, we only have to get a single element.
      */
-    const limit = getLimit(filter.name, filter.data);
+    const limit = getLimit(filter.name, filter.data, partLimit);
 
     if (limit === 0) return [];
 
@@ -314,10 +325,16 @@ function findFilterElements(
      * Otherwise,
      */
     return remainingSelector.some(isFilter)
-        ? findFilterElements(result, remainingSelector, options, false)
+        ? findFilterElements(
+              result,
+              remainingSelector,
+              options,
+              false,
+              totalLimit
+          )
         : remainingHasTraversal
         ? // Query existing elements to resolve traversal.
-          findElements(result, [remainingSelector], options, Infinity)
+          findElements(result, [remainingSelector], options, totalLimit)
         : // If we don't have any more traversals, simply filter elements.
           filterElements(result, [remainingSelector], options);
 }
