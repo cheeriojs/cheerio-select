@@ -37,7 +37,11 @@ export function isFilter(s: Selector): s is CheerioSelector {
     return false;
 }
 
-export function getLimit(filter: Filter, data: string | null): number {
+export function getLimit(
+    filter: Filter,
+    data: string | null,
+    partLimit: number
+): number {
     const num = data != null ? parseInt(data, 10) : NaN;
 
     switch (filter) {
@@ -47,10 +51,19 @@ export function getLimit(filter: Filter, data: string | null): number {
         case "eq":
             return isFinite(num) ? (num >= 0 ? num + 1 : Infinity) : 0;
         case "lt":
-            return isFinite(num) ? (num >= 0 ? num : Infinity) : 0;
+            return isFinite(num)
+                ? num >= 0
+                    ? Math.min(num, partLimit)
+                    : Infinity
+                : 0;
         case "gt":
             return isFinite(num) ? Infinity : 0;
-        default:
+        case "odd":
+            return 2 * partLimit;
+        case "even":
+            return 2 * partLimit - 1;
+        case "last":
+        case "not":
             return Infinity;
     }
 }
