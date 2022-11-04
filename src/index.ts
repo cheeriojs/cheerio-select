@@ -1,8 +1,7 @@
 import { parse, type Selector, SelectorType, isTraversal } from "css-what";
-import {
-    _compileToken as compileToken,
-    type Options as CSSSelectOptions,
-    prepareContext,
+import type {  Options as CSSSelectOptions }  from "css-select";
+import { _compileToken as compileToken,
+         prepareContext
 } from "css-select";
 import * as DomUtils from "domutils";
 import * as boolbase from "boolbase";
