@@ -23,7 +23,7 @@ describe("index", () => {
     it("should support positionals", () => {
         const dom = parseDocument("<div><p>First<p>Second");
         expect(select("p:first", dom)).toMatchInlineSnapshot(`
-            Array [
+            [
               <p>
                 First
               </p>,
@@ -31,7 +31,7 @@ describe("index", () => {
         `);
 
         expect(select("p:last", dom)).toMatchInlineSnapshot(`
-            Array [
+            [
               <p>
                 Second
               </p>,
@@ -39,7 +39,7 @@ describe("index", () => {
         `);
 
         expect(select("p:lt(-1)", dom)).toMatchInlineSnapshot(`
-            Array [
+            [
               <p>
                 First
               </p>,

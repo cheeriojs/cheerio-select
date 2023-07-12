@@ -67,7 +67,10 @@
         "testEnvironment": "node",
         "coverageProvider": "v8",
         "moduleNameMapper": {
-            "^(.*)\\.js$": "$1"
+            "^(.*)\\.js$": [
+                "$1",
+                "$1.js"
+            ]
         }
     },
     "prettier": {
