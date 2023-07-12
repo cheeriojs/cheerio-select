@@ -6,7 +6,7 @@ const testCases: [
     name: string,
     html: string,
     selector: string,
-    text: string
+    text: string,
 ][] = [
     ["Non-advanced selector", "<div>foo</div><div>bar</div>", "div", "foobar"],
     [
@@ -72,7 +72,7 @@ describe("cheerio-advanced-selectors — #find()", () => {
 
     it("Custom root", () => {
         const document = parseDocument(
-            "<div><span>foo</span></div><div><span>bar</span></div>"
+            "<div><span>foo</span></div><div><span>bar</span></div>",
         );
         const result = select("span:eq(1)", document, {
             root: document,

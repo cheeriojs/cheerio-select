@@ -14,7 +14,7 @@ describe("helpers", () => {
 
         it("should query sub-selectors", () => {
             const selector = parse(
-                "foo, bar, baz, :not(:last), :not(:not(:first))"
+                "foo, bar, baz, :not(:last), :not(:not(:first))",
             );
             const [plainSelectors, filteredSelectors] =
                 groupSelectors(selector);

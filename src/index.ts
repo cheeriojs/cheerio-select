@@ -36,7 +36,7 @@ export interface Options extends CSSSelectOptions<AnyNode, Element> {
 export function is(
     element: Element,
     selector: string | ((el: Element) => boolean),
-    options: Options = {}
+    options: Options = {},
 ): boolean {
     return some([element], selector, options);
 }
@@ -44,7 +44,7 @@ export function is(
 export function some(
     elements: Element[],
     selector: string | ((el: Element) => boolean),
-    options: Options = {}
+    options: Options = {},
 ): boolean {
     if (typeof selector === "function") return elements.some(selector);
 
@@ -53,7 +53,7 @@ export function some(
     return (
         (plain.length > 0 && elements.some(compileToken(plain, options))) ||
         filtered.some(
-            (sel) => filterBySelector(sel, elements, options).length > 0
+            (sel) => filterBySelector(sel, elements, options).length > 0,
         )
     );
 }
@@ -62,7 +62,7 @@ function filterByPosition(
     filter: Filter,
     elems: Element[],
     data: Selector[][] | string | null,
-    options: Options
+    options: Options,
 ): Element[] {
     const num = typeof data === "string" ? parseInt(data, 10) : NaN;
 
@@ -86,7 +86,7 @@ function filterByPosition(
             return elems.filter((_, i) => i % 2 === 1);
         case "not": {
             const filtered = new Set(
-                filterParsed(data as Selector[][], elems, options)
+                filterParsed(data as Selector[][], elems, options),
             );
 
             return elems.filter((e) => !filtered.has(e));
@@ -97,7 +97,7 @@ function filterByPosition(
 export function filter(
     selector: string,
     elements: AnyNode[],
-    options: Options = {}
+    options: Options = {},
 ): Element[] {
     return filterParsed(parse(selector), elements, options);
 }
@@ -114,7 +114,7 @@ export function filter(
 function filterParsed(
     selector: Selector[][],
     elements: AnyNode[],
-    options: Options
+    options: Options,
 ): Element[] {
     if (elements.length === 0) return [];
 
@@ -170,7 +170,7 @@ function filterParsed(
               ? elements
               : // Filter elements to preserve order
                 elements.filter((el) =>
-                    (found as Set<AnyNode>).has(el)
+                    (found as Set<AnyNode>).has(el),
                 )) as Element[])
         : [];
 }
@@ -178,7 +178,7 @@ function filterParsed(
 function filterBySelector(
     selector: Selector[],
     elements: AnyNode[],
-    options: Options
+    options: Options,
 ) {
     if (selector.some(isTraversal)) {
         /*
@@ -196,7 +196,7 @@ function filterBySelector(
         selector,
         options,
         false,
-        elements.length
+        elements.length,
     );
 }
 
@@ -204,7 +204,7 @@ export function select(
     selector: string | ((el: Element) => boolean),
     root: AnyNode | AnyNode[],
     options: Options = {},
-    limit = Infinity
+    limit = Infinity,
 ): Element[] {
     if (typeof selector === "function") {
         return find(root, selector);
@@ -213,7 +213,7 @@ export function select(
     const [plain, filtered] = groupSelectors(parse(selector));
 
     const results: Element[][] = filtered.map((sel) =>
-        findFilterElements(root, sel, options, true, limit)
+        findFilterElements(root, sel, options, true, limit),
     );
 
     // Plain selectors can be queried in a single go
@@ -246,7 +246,7 @@ function findFilterElements(
     selector: Selector[],
     options: Options,
     queryForSelector: boolean,
-    totalLimit: number
+    totalLimit: number,
 ): Element[] {
     const filterIndex = selector.findIndex(isFilter);
     const sub = selector.slice(0, filterIndex);
@@ -330,7 +330,7 @@ function findFilterElements(
               remainingSelector,
               options,
               false,
-              totalLimit
+              totalLimit,
           )
         : remainingHasTraversal
         ? // Query existing elements to resolve traversal.
@@ -348,12 +348,12 @@ function findElements(
     root: AnyNode | AnyNode[],
     sel: Selector[][],
     options: Options,
-    limit: number
+    limit: number,
 ): Element[] {
     const query: CompiledQuery = compileToken<AnyNode, Element>(
         sel,
         options,
-        root
+        root,
     );
 
     return find(root, query, limit);
@@ -362,29 +362,29 @@ function findElements(
 function find(
     root: AnyNode | AnyNode[],
     query: CompiledQuery,
-    limit = Infinity
+    limit = Infinity,
 ): Element[] {
     const elems = prepareContext<AnyNode, Element>(
         root,
         DomUtils,
-        query.shouldTestNextSiblings
+        query.shouldTestNextSiblings,
     );
 
     return DomUtils.find(
         (node: AnyNode) => DomUtils.isTag(node) && query(node),
         elems,
         true,
-        limit
+        limit,
     ) as Element[];
 }
 
 function filterElements(
     elements: AnyNode | AnyNode[],
     sel: Selector[][],
-    options: Options
+    options: Options,
 ): Element[] {
     const els = (Array.isArray(elements) ? elements : [elements]).filter(
-        DomUtils.isTag
+        DomUtils.isTag,
     );
 
     if (els.length === 0) return els;
