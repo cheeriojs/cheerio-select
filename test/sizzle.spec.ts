@@ -12,7 +12,7 @@ function getDOM(str: string) {
 function matchesSelector(
     element: AnyNode,
     selector: string,
-    options?: Options
+    options?: Options,
 ): boolean {
     return (
         DomUtils.isTag(element) &&
@@ -32,7 +32,7 @@ describe("Sizzle", () => {
         expect(select("", document)).toHaveLength(0);
         // Text element as context fails silently
         expect(
-            select("div", document.createTextNode("") as AnyNode as Element)
+            select("div", document.createTextNode("") as AnyNode as Element),
         ).toStrictEqual([]);
         const form = document.getElementById("form");
         // Empty string passed to matchesSelector does not match
@@ -88,7 +88,7 @@ describe("Sizzle", () => {
         t(
             "select",
             ["select1", "select2", "select3", "select4", "select5"],
-            form
+            form,
         );
 
         /*
@@ -96,7 +96,7 @@ describe("Sizzle", () => {
          * Check for duplicates: p, div p
          */
         expect(select("p, div p", document)).toStrictEqual(
-            select("p", document)
+            select("p", document),
         );
 
         // Checking sort order
@@ -193,8 +193,8 @@ describe("Sizzle", () => {
         // Attribute selector filter with ID
         expect(
             select("component", xml).filter((node) =>
-                matchesSelector(node, "#seite1")
-            )
+                matchesSelector(node, "#seite1"),
+            ),
         ).toHaveLength(1);
         // Descendent selector and dir caching
         expect(select("meta property thing", xml)).toHaveLength(2);
@@ -205,7 +205,7 @@ describe("Sizzle", () => {
 
         xml = parseDOM(
             "<?xml version='1.0' encoding='UTF-8'?><root><elem id='1'/></root>",
-            xmlOptions
+            xmlOptions,
         ) as Element[];
         // Non-qSA path correctly handles numeric ids (jQuery #14142)
         expect(select("elem:not(:has(*))", xml)).toHaveLength(1);
@@ -257,9 +257,9 @@ describe("Sizzle", () => {
 
         // Make sure attribute value quoting works correctly. See: #6093
         parseDOM(
-            "<input type='hidden' value='2' name='foo.baz' id='attrbad1'/><input type='hidden' value='2' name='foo[baz]' id='attrbad2'/>"
+            "<input type='hidden' value='2' name='foo.baz' id='attrbad1'/><input type='hidden' value='2' name='foo[baz]' id='attrbad2'/>",
         ).forEach((node) =>
-            DomUtils.appendChild(document.getElementById("form"), node)
+            DomUtils.appendChild(document.getElementById("form"), node),
         );
 
         // Shouldn't be matching those inner brackets
@@ -304,7 +304,7 @@ describe("Sizzle", () => {
         t("form > #test\\.foo\\[5\\]bar", ["test.foo[5]bar"]);
 
         const [fiddle] = parseDOM(
-            "<div id='fiddle\\Foo'><span id='fiddleSpan'></span></div>"
+            "<div id='fiddle\\Foo'><span id='fiddleSpan'></span></div>",
         );
         DomUtils.appendChild(document.getElementById("qunit-fixture"), fiddle);
         // Escaped ID as context
@@ -326,7 +326,7 @@ describe("Sizzle", () => {
 
         // ID selector with same value for a name attribute
         expect((select("#tName1", document)[0] as Element).attribs["id"]).toBe(
-            "tName1"
+            "tName1",
         );
         // ID selector non-existing but name attribute on an A tag
         t("#tName2", []);
@@ -336,15 +336,15 @@ describe("Sizzle", () => {
         t("#tName1 span", ["tName1-span"]);
         // Ending with ID
         expect(
-            (select("div > div #tName1", document)[0] as Element).attribs["id"]
+            (select("div > div #tName1", document)[0] as Element).attribs["id"],
         ).toBe(
             (select("#tName1-span", document)[0]?.parent as Element).attribs[
                 "id"
-            ]
+            ],
         );
 
         parseDOM("<a id='backslash\\foo'></a>").forEach((node) =>
-            DomUtils.appendChild(document.getElementById("form"), node)
+            DomUtils.appendChild(document.getElementById("form"), node),
         );
         // ID Selector contains backslash
         t("#backslash\\\\foo", ["backslash\\foo"]);
@@ -409,7 +409,7 @@ describe("Sizzle", () => {
 
         const div = document.createElement("div");
         div.children = parseDOM(
-            "<div class='test e'></div><div class='test'></div>"
+            "<div class='test e'></div><div class='test'></div>",
         );
         div.children.forEach((e) => {
             e.parent = div;
@@ -439,7 +439,7 @@ describe("Sizzle", () => {
         ]);
 
         const [div2] = parseDOM(
-            "<div><svg width='200' height='250' version='1.1' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='10' width='30' height='30' class='foo'></rect></svg></div>"
+            "<div><svg width='200' height='250' version='1.1' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='10' width='30' height='30' class='foo'></rect></svg></div>",
         ) as Element[];
         // Class selector against SVG
         expect(select(".foo", div2)).toHaveLength(1);
@@ -472,7 +472,7 @@ describe("Sizzle", () => {
         t("input[name='foo[bar]']", ["hidden2"], form1);
 
         const [form2] = parseDOM(
-            "<form><input name='id'/></form>"
+            "<form><input name='id'/></form>",
         ) as Element[];
         DomUtils.appendChild(document.body, form2);
 
@@ -676,7 +676,7 @@ describe("Sizzle", () => {
         t(
             ":scope > label",
             ["scopeTest--child"],
-            select("#scopeTest", document)[0]
+            select("#scopeTest", document)[0],
         );
     });
 
@@ -753,13 +753,13 @@ describe("Sizzle", () => {
         t(
             "input[data-comma='0,1']",
             ["el12087"],
-            document.getElementById("t12087")
+            document.getElementById("t12087"),
         );
         // With context, double-quoted attribute containing ','
         t(
             'input[data-comma="0,1"]',
             ["el12087"],
-            document.getElementById("t12087")
+            document.getElementById("t12087"),
         );
 
         // Multiple Attribute Equals
@@ -798,7 +798,7 @@ describe("Sizzle", () => {
 
         // Attribute Is Not Equal Matches
         expect(matchesSelector(opt, "[id*=option1][type!=checkbox]")).toBe(
-            true
+            true,
         );
         // Attribute With No Quotes Contains Matches
         expect(matchesSelector(opt, "[id*=option1]")).toBe(true);
@@ -810,7 +810,7 @@ describe("Sizzle", () => {
         expect(matchesSelector(opt, "[id=option1a]")).toBe(true);
         // Attribute With No Quotes Href Contains Matches
         expect(
-            matchesSelector(document.getElementById("simon1"), "a[href*=#]")
+            matchesSelector(document.getElementById("simon1"), "a[href*=#]"),
         ).toBe(true);
 
         // Empty values
@@ -835,7 +835,7 @@ describe("Sizzle", () => {
 
         // Quote within attribute value does not mess up tokenizer
         expect(matchesSelector(input, 'input[title="Don\'t click me"]')).toBe(
-            true
+            true,
         );
 
         // See jQuery #12303
@@ -861,10 +861,13 @@ describe("Sizzle", () => {
                 "<input type='hidden' id='attrbad_backslash' data-attr='&#92;'/>" +
                 "<input type='hidden' id='attrbad_backslash_quote' data-attr='&#92;&#39;'/>" +
                 "<input type='hidden' id='attrbad_backslash_backslash' data-attr='&#92;&#92;'/>" +
-                "<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>"
+                "<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>",
         ) as Element[];
         attrbad.forEach((attr) =>
-            DomUtils.appendChild(document.getElementById("qunit-fixture"), attr)
+            DomUtils.appendChild(
+                document.getElementById("qunit-fixture"),
+                attr,
+            ),
         );
 
         // Underscores don't need escaping
@@ -1333,7 +1336,7 @@ describe("Sizzle", () => {
 
         // All not grandparents
         expect(
-            select("#qunit-fixture :not(:has(:has(*)))", document).length
+            select("#qunit-fixture :not(:has(:has(*)))", document).length,
         ).toBeTruthy();
 
         const select1 = document.getElementById("select1");
@@ -1364,8 +1367,8 @@ describe("Sizzle", () => {
             const els = getDOM(
                 "<input id='input_%' type='%'/><button id='button_%' type='%'>test</button>".replace(
                     /%/g,
-                    type
-                )
+                    type,
+                ),
             );
             els.forEach((el) => DomUtils.appendChild(tmp, el));
 
@@ -1391,7 +1394,7 @@ describe("Sizzle", () => {
                 "option2b",
                 "option2c",
             ],
-            document.getElementById("qunit-fixture")
+            document.getElementById("qunit-fixture"),
         );
 
         /*
@@ -1401,7 +1404,7 @@ describe("Sizzle", () => {
         t("#qunit-fixture p:has(:contains(mark)):has(code)", ["ap"]);
         t(
             "#qunit-fixture p:has(:contains(mark)):has(code):contains(This link)",
-            ["ap"]
+            ["ap"],
         );
 
         // Pseudo argument containing ')'
@@ -1424,7 +1427,7 @@ describe("Sizzle", () => {
         // Tokenization stressor
         t(
             "a[class*=blog]:not(:has(*, :contains(!)), :contains(!)), br:contains(]), p:contains(]), :not(:empty):not(:parent)",
-            ["ap", "mark", "yahoo", "simon"]
+            ["ap", "mark", "yahoo", "simon"],
         );
     });
 
@@ -1608,12 +1611,12 @@ describe("Sizzle", () => {
         // :not chaining (colon in attribute and nested chaining)
         t(
             "#qunit-fixture form[id]:not([action='form:action']:button):not(:input)",
-            ["form", "lengthtest", "name-tests", "testForm"]
+            ["form", "lengthtest", "name-tests", "testForm"],
         );
         // :not chaining
         t(
             "#form select:not(.select1):contains(Nothing) > option:not(option)",
-            []
+            [],
         );
     });
 
@@ -1646,14 +1649,14 @@ describe("Sizzle", () => {
         t(
             "~ em:first",
             ["siblingnext"],
-            document.getElementById("siblingfirst")
+            document.getElementById("siblingfirst"),
         );
         // Find by general sibling combinator (#8310)
         expect(
-            select("#listWithTabIndex li:eq(2) ~ li", document)
+            select("#listWithTabIndex li:eq(2) ~ li", document),
         ).toHaveLength(1);
         expect(
-            select("#listWithTabIndex li:eq(2) ~ li:lt(100)", document)
+            select("#listWithTabIndex li:eq(2) ~ li:lt(100)", document),
         ).toHaveLength(1);
         const nothiddendiv = document.getElementById("nothiddendiv");
         // Verify child context positional selector
@@ -1755,7 +1758,7 @@ describe("Sizzle", () => {
         const context = document.getElementById("qunit-fixture");
         DomUtils.appendChild(
             context,
-            getDOM("<div id='jquery12526'></div>")[0]
+            getDOM("<div id='jquery12526'></div>")[0],
         );
 
         // Post-manipulation positional
@@ -1766,11 +1769,11 @@ describe("Sizzle", () => {
         expect.assertions(10);
 
         const extraTexts = getDOM(
-            '<input id="impliedText"/><input id="capitalText" type="TEXT">'
+            '<input id="impliedText"/><input id="capitalText" type="TEXT">',
         );
 
         extraTexts.forEach((text) =>
-            DomUtils.appendChild(document.getElementById("form"), text)
+            DomUtils.appendChild(document.getElementById("form"), text),
         );
 
         // Form element :input
@@ -1859,7 +1862,7 @@ describe("Sizzle", () => {
         t(
             ":not(code)",
             ["sndp", "en", "yahoo", "sap", "anchor2", "simon"],
-            document.getElementById("foo")
+            document.getElementById("foo"),
         );
     });
 });

@@ -8,7 +8,7 @@ export function getDocumentRoot(node: AnyNode): AnyNode {
 }
 
 export function groupSelectors(
-    selectors: Selector[][]
+    selectors: Selector[][],
 ): [plain: Selector[][], filtered: Selector[][]] {
     const filteredSelectors: Selector[][] = [];
     const plainSelectors: Selector[][] = [];

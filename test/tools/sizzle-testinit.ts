@@ -7,7 +7,7 @@ import { Text, Element, AnyNode } from "domhandler";
 
 function getDOMFromPath(
     file: string,
-    options?: htmlparser2.ParserOptions
+    options?: htmlparser2.ParserOptions,
 ): AnyNode[] {
     const filePath = path.join(__dirname, "..", "fixtures", file);
     return htmlparser2.parseDOM(fs.readFileSync(filePath, "utf8"), options);
@@ -61,11 +61,11 @@ export function q(...ids: string[]): Element[] {
 export function t(
     selector: string,
     expectedIds: string[],
-    context: AnyNode[] | AnyNode = document
+    context: AnyNode[] | AnyNode = document,
 ): void {
     const actual = select(
         selector,
-        context as Element | Element[]
+        context as Element | Element[],
     ) as Element[];
     const actualIds = actual.map((e) => e.attribs["id"]);
 
