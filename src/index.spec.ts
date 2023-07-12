@@ -69,7 +69,7 @@ describe("index", () => {
         expect(filter("div:first p:first", ps)).toHaveLength(1);
         expect(filter("p:nth-child(1), :last", ps)).toHaveLength(2);
         expect(
-            filter("div p:not(:scope)", ps, { context: [ps[1]] })
+            filter("div p:not(:scope)", ps, { context: [ps[1]] }),
         ).toHaveLength(1);
         expect(filter(":last", [])).toHaveLength(0);
         expect(filter("p, :last", ps)).toHaveLength(2);
@@ -114,7 +114,7 @@ describe("index", () => {
         expect(select("ul li:lt(3)", dom)).toHaveLength(2);
         expect(select("ul:first li", dom, { context: [dom] })).toHaveLength(2);
         expect(
-            select("ul:first li:lt(3)", dom, { context: [dom] })
+            select("ul:first li:lt(3)", dom, { context: [dom] }),
         ).toHaveLength(2);
     });
 

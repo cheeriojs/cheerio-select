@@ -40,7 +40,7 @@ export function isFilter(s: Selector): s is CheerioSelector {
 export function getLimit(
     filter: Filter,
     data: string | null,
-    partLimit: number
+    partLimit: number,
 ): number {
     const num = data != null ? parseInt(data, 10) : NaN;
 
