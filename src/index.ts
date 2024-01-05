@@ -271,10 +271,10 @@ function findFilterElements(
         sub.length === 0 && !Array.isArray(root)
             ? DomUtils.getChildren(root).filter(DomUtils.isTag)
             : sub.length === 0
-            ? (Array.isArray(root) ? root : [root]).filter(DomUtils.isTag)
-            : queryForSelector || sub.some(isTraversal)
-            ? findElements(root, [sub], options, limit)
-            : filterElements(root, [sub], options);
+              ? (Array.isArray(root) ? root : [root]).filter(DomUtils.isTag)
+              : queryForSelector || sub.some(isTraversal)
+                ? findElements(root, [sub], options, limit)
+                : filterElements(root, [sub], options);
 
     const elems = elemsNoLimit.slice(0, limit);
 
@@ -333,10 +333,10 @@ function findFilterElements(
               totalLimit,
           )
         : remainingHasTraversal
-        ? // Query existing elements to resolve traversal.
-          findElements(result, [remainingSelector], options, totalLimit)
-        : // If we don't have any more traversals, simply filter elements.
-          filterElements(result, [remainingSelector], options);
+          ? // Query existing elements to resolve traversal.
+            findElements(result, [remainingSelector], options, totalLimit)
+          : // If we don't have any more traversals, simply filter elements.
+            filterElements(result, [remainingSelector], options);
 }
 
 interface CompiledQuery {
