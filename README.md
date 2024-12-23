@@ -5,19 +5,19 @@ on the [`css-select`](https://github.com/fb55/css-select) library. This library
 is a thin wrapper around [`css-select`](https://github.com/fb55/css-select) that
 adds support for all of the jQuery positional pseudo-selectors:
 
--   `:first`: Selects the first element in the set of elements.
--   `:last`: Selects the last element in the set of elements.
--   `:eq(index)`: Selects the element with the specified index.
--   `:nth(index)`: Selects the element with the specified index. This
-    pseudo-class is equivalent to :eq.
--   `:gt(index)`: Selects elements with a higher index than the specified value.
--   `:lt(index)`: Selects elements with a lower index than the specified value.
--   `:even`: Selects even elements, zero-indexed. For example, :even will select
-    the second, fourth, and sixth elements.
--   `:odd`: Selects odd elements, zero-indexed. For example, :odd will select
-    the first, third, and fifth elements.
--   `:not(:positional)`, where `:positional` is any of the above: Excludes
-    elements that match the specified selector.
+- `:first`: Selects the first element in the set of elements.
+- `:last`: Selects the last element in the set of elements.
+- `:eq(index)`: Selects the element with the specified index.
+- `:nth(index)`: Selects the element with the specified index. This pseudo-class
+  is equivalent to :eq.
+- `:gt(index)`: Selects elements with a higher index than the specified value.
+- `:lt(index)`: Selects elements with a lower index than the specified value.
+- `:even`: Selects even elements, zero-indexed. For example, :even will select
+  the second, fourth, and sixth elements.
+- `:odd`: Selects odd elements, zero-indexed. For example, :odd will select the
+  first, third, and fifth elements.
+- `:not(:positional)`, where `:positional` is any of the above: Excludes
+  elements that match the specified selector.
 
 ## Installation
 
