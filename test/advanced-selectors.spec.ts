@@ -1,6 +1,6 @@
-import { select } from "../src";
-import { parseDocument } from "htmlparser2";
 import { innerText } from "domutils";
+import { parseDocument } from "htmlparser2";
+import { select } from "../src";
 
 const testCases: [
     name: string,

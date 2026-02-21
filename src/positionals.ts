@@ -1,4 +1,4 @@
-import type { Selector, PseudoSelector } from "css-what";
+import type { PseudoSelector, Selector } from "css-what";
 
 export type Filter =
     | "first"
@@ -42,28 +42,39 @@ export function getLimit(
     data: string | null,
     partLimit: number,
 ): number {
-    const num = data != null ? parseInt(data, 10) : NaN;
+    const number_ = data == null ? Number.NaN : Number.parseInt(data, 10);
 
     switch (filter) {
-        case "first":
+        case "first": {
             return 1;
+        }
         case "nth":
-        case "eq":
-            return isFinite(num) ? (num >= 0 ? num + 1 : Infinity) : 0;
-        case "lt":
-            return isFinite(num)
-                ? num >= 0
-                    ? Math.min(num, partLimit)
+        case "eq": {
+            return isFinite(number_)
+                ? number_ >= 0
+                    ? number_ + 1
                     : Infinity
                 : 0;
-        case "gt":
-            return isFinite(num) ? Infinity : 0;
-        case "odd":
+        }
+        case "lt": {
+            return isFinite(number_)
+                ? number_ >= 0
+                    ? Math.min(number_, partLimit)
+                    : Infinity
+                : 0;
+        }
+        case "gt": {
+            return isFinite(number_) ? Infinity : 0;
+        }
+        case "odd": {
             return 2 * partLimit;
-        case "even":
+        }
+        case "even": {
             return 2 * partLimit - 1;
+        }
         case "last":
-        case "not":
+        case "not": {
             return Infinity;
+        }
     }
 }

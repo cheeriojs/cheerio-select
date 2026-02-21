@@ -1,9 +1,9 @@
-import { select } from "../../src";
-import fs from "fs";
-import path from "path";
-import * as htmlparser2 from "htmlparser2";
+import { type AnyNode, Element, Text } from "domhandler";
 import * as DomUtils from "domutils";
-import { Text, Element, AnyNode } from "domhandler";
+import fs from "fs";
+import * as htmlparser2 from "htmlparser2";
+import path from "path";
+import { select } from "../../src";
 
 function getDOMFromPath(
     file: string,
@@ -38,7 +38,8 @@ export function getDocument(file: string): SimpleDocument {
 let document = loadDoc();
 
 export function loadDoc(): SimpleDocument {
-    return (document = getDocument("sizzle.html"));
+    document = getDocument("sizzle.html");
+    return document;
 }
 
 /**

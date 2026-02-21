@@ -1,8 +1,9 @@
-import * as DomUtils from "domutils";
-import { select, filter, Options } from "../src";
 import type { AnyNode, Element } from "domhandler";
-import { q, t, createWithFriesXML, loadDoc } from "./tools/sizzle-testinit";
+import * as DomUtils from "domutils";
 import { parseDOM } from "htmlparser2";
+import { filter, type Options, select } from "../src";
+import { createWithFriesXML, loadDoc, q, t } from "./tools/sizzle-testinit";
+
 let document = loadDoc();
 
 function getDOM(str: string) {
@@ -258,9 +259,9 @@ describe("Sizzle", () => {
         // Make sure attribute value quoting works correctly. See: #6093
         parseDOM(
             "<input type='hidden' value='2' name='foo.baz' id='attrbad1'/><input type='hidden' value='2' name='foo[baz]' id='attrbad2'/>",
-        ).forEach((node) =>
-            DomUtils.appendChild(document.getElementById("form"), node),
-        );
+        ).forEach((node) => {
+            DomUtils.appendChild(document.getElementById("form"), node);
+        });
 
         // Shouldn't be matching those inner brackets
         broken("input[name=foo[baz]]");
@@ -343,9 +344,9 @@ describe("Sizzle", () => {
             ],
         );
 
-        parseDOM("<a id='backslash\\foo'></a>").forEach((node) =>
-            DomUtils.appendChild(document.getElementById("form"), node),
-        );
+        parseDOM("<a id='backslash\\foo'></a>").forEach((node) => {
+            DomUtils.appendChild(document.getElementById("form"), node);
+        });
         // ID Selector contains backslash
         t("#backslash\\\\foo", ["backslash\\foo"]);
 

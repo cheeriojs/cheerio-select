@@ -1,22 +1,22 @@
-import { parse, type Selector, SelectorType, isTraversal } from "css-what";
+import * as boolbase from "boolbase";
 import {
-    _compileToken as compileToken,
     type Options as CSSSelectOptions,
+    _compileToken as compileToken,
     prepareContext,
 } from "css-select";
+import { isTraversal, parse, type Selector, SelectorType } from "css-what";
+import type { AnyNode, Document, Element } from "domhandler";
 import * as DomUtils from "domutils";
-import * as boolbase from "boolbase";
-import type { Element, AnyNode, Document } from "domhandler";
 import { getDocumentRoot, groupSelectors } from "./helpers.js";
 import {
-    type Filter,
-    isFilter,
     type CheerioSelector,
+    type Filter,
     getLimit,
+    isFilter,
 } from "./positionals.js";
 
 // Re-export pseudo extension points
-export { filters, pseudos, aliases } from "css-select";
+export { aliases, filters, pseudos } from "css-select";
 
 const UNIVERSAL_SELECTOR: Selector = {
     type: SelectorType.Universal,
@@ -35,7 +35,7 @@ export interface Options extends CSSSelectOptions<AnyNode, Element> {
 
 export function is(
     element: Element,
-    selector: string | ((el: Element) => boolean),
+    selector: string | ((element_: Element) => boolean),
     options: Options = {},
 ): boolean {
     return some([element], selector, options);
@@ -43,7 +43,7 @@ export function is(
 
 export function some(
     elements: Element[],
-    selector: string | ((el: Element) => boolean),
+    selector: string | ((element: Element) => boolean),
     options: Options = {},
 ): boolean {
     if (typeof selector === "function") return elements.some(selector);
@@ -60,36 +60,49 @@ export function some(
 
 function filterByPosition(
     filter: Filter,
-    elems: Element[],
+    elements: Element[],
     data: Selector[][] | string | null,
     options: Options,
 ): Element[] {
-    const num = typeof data === "string" ? parseInt(data, 10) : NaN;
+    const number_ =
+        typeof data === "string" ? Number.parseInt(data, 10) : Number.NaN;
 
     switch (filter) {
         case "first":
-        case "lt":
+        case "lt": {
             // Already done in `getLimit`
-            return elems;
-        case "last":
-            return elems.length > 0 ? [elems[elems.length - 1]] : elems;
+            return elements;
+        }
+        case "last": {
+            return elements.length > 0
+                ? [elements[elements.length - 1]]
+                : elements;
+        }
         case "nth":
-        case "eq":
-            return isFinite(num) && Math.abs(num) < elems.length
-                ? [num < 0 ? elems[elems.length + num] : elems[num]]
+        case "eq": {
+            return isFinite(number_) && Math.abs(number_) < elements.length
+                ? [
+                      number_ < 0
+                          ? elements[elements.length + number_]
+                          : elements[number_],
+                  ]
                 : [];
-        case "gt":
-            return isFinite(num) ? elems.slice(num + 1) : [];
-        case "even":
-            return elems.filter((_, i) => i % 2 === 0);
-        case "odd":
-            return elems.filter((_, i) => i % 2 === 1);
+        }
+        case "gt": {
+            return isFinite(number_) ? elements.slice(number_ + 1) : [];
+        }
+        case "even": {
+            return elements.filter((_, index) => index % 2 === 0);
+        }
+        case "odd": {
+            return elements.filter((_, index) => index % 2 === 1);
+        }
         case "not": {
             const filtered = new Set(
-                filterParsed(data as Selector[][], elems, options),
+                filterParsed(data as Selector[][], elements, options),
             );
 
-            return elems.filter((e) => !filtered.has(e));
+            return elements.filter((e) => !filtered.has(e));
         }
     }
 }
@@ -121,7 +134,7 @@ function filterParsed(
     const [plainSelectors, filteredSelectors] = groupSelectors(selector);
     let found: undefined | Set<Element>;
 
-    if (plainSelectors.length) {
+    if (plainSelectors.length > 0) {
         const filtered = filterElements(elements, plainSelectors, options);
 
         // If there are no filters, just return
@@ -130,17 +143,17 @@ function filterParsed(
         }
 
         // Otherwise, we have to do some filtering
-        if (filtered.length) {
+        if (filtered.length > 0) {
             found = new Set(filtered);
         }
     }
 
     for (
-        let i = 0;
-        i < filteredSelectors.length && found?.size !== elements.length;
-        i++
+        let index = 0;
+        index < filteredSelectors.length && found?.size !== elements.length;
+        index++
     ) {
-        const filteredSelector = filteredSelectors[i];
+        const filteredSelector = filteredSelectors[index];
         const missing = found
             ? elements.filter((e) => DomUtils.isTag(e) && !found!.has(e))
             : elements;
@@ -148,31 +161,33 @@ function filterParsed(
         if (missing.length === 0) break;
         const filtered = filterBySelector(filteredSelector, elements, options);
 
-        if (filtered.length) {
-            if (!found) {
+        if (filtered.length > 0) {
+            if (found) {
+                for (const element of filtered) {
+                    found!.add(element);
+                }
+            } else {
                 /*
                  * If we haven't found anything before the last selector,
                  * just return what we found now.
                  */
-                if (i === filteredSelectors.length - 1) {
+                if (index === filteredSelectors.length - 1) {
                     return filtered;
                 }
 
                 found = new Set(filtered);
-            } else {
-                filtered.forEach((el) => found!.add(el));
             }
         }
     }
 
-    return typeof found !== "undefined"
-        ? ((found.size === elements.length
+    return found === undefined
+        ? []
+        : ((found.size === elements.length
               ? elements
               : // Filter elements to preserve order
-                elements.filter((el) =>
-                    (found as Set<AnyNode>).has(el),
-                )) as Element[])
-        : [];
+                elements.filter((element) =>
+                    (found as Set<AnyNode>).has(element),
+                )) as Element[]);
 }
 
 function filterBySelector(
@@ -186,9 +201,19 @@ function filterBySelector(
          * set to all of our nodes.
          */
         const root = options.root ?? getDocumentRoot(elements[0]);
-        const opts = { ...options, context: elements, relativeSelector: false };
+        const options_ = {
+            ...options,
+            context: elements,
+            relativeSelector: false,
+        };
         selector.push(SCOPE_PSEUDO);
-        return findFilterElements(root, selector, opts, true, elements.length);
+        return findFilterElements(
+            root,
+            selector,
+            options_,
+            true,
+            elements.length,
+        );
     }
     // Performance optimization: If we don't have to traverse, just filter set.
     return findFilterElements(
@@ -201,7 +226,7 @@ function filterBySelector(
 }
 
 export function select(
-    selector: string | ((el: Element) => boolean),
+    selector: string | ((element: Element) => boolean),
     root: AnyNode | AnyNode[],
     options: Options = {},
     limit = Infinity,
@@ -217,7 +242,7 @@ export function select(
     );
 
     // Plain selectors can be queried in a single go
-    if (plain.length) {
+    if (plain.length > 0) {
         results.push(findElements(root, plain, options, limit));
     }
 
@@ -267,7 +292,7 @@ function findFilterElements(
      * Skip `findElements` call if our selector starts with a positional
      * pseudo.
      */
-    const elemsNoLimit =
+    const elementsNoLimit =
         sub.length === 0 && !Array.isArray(root)
             ? DomUtils.getChildren(root).filter(DomUtils.isTag)
             : sub.length === 0
@@ -276,9 +301,9 @@ function findFilterElements(
                 ? findElements(root, [sub], options, limit)
                 : filterElements(root, [sub], options);
 
-    const elems = elemsNoLimit.slice(0, limit);
+    const elements = elementsNoLimit.slice(0, limit);
 
-    let result = filterByPosition(filter.name, elems, filter.data, options);
+    let result = filterByPosition(filter.name, elements, filter.data, options);
 
     if (result.length === 0 || selector.length === filterIndex + 1) {
         return result;
@@ -311,7 +336,7 @@ function findFilterElements(
              * Add a custom root func, to make sure traversals don't match elements
              * that aren't a part of the considered tree.
              */
-            rootFunc: (el: Element) => result.includes(el),
+            rootFunc: (element: Element) => result.includes(element),
         };
     } else if (options.rootFunc && options.rootFunc !== boolbase.trueFunc) {
         options = { ...options, rootFunc: boolbase.trueFunc };
@@ -340,7 +365,7 @@ function findFilterElements(
 }
 
 interface CompiledQuery {
-    (el: Element): boolean;
+    (element: Element): boolean;
     shouldTestNextSiblings?: boolean;
 }
 
@@ -364,7 +389,7 @@ function find(
     query: CompiledQuery,
     limit = Infinity,
 ): Element[] {
-    const elems = prepareContext<AnyNode, Element>(
+    const elements = prepareContext<AnyNode, Element>(
         root,
         DomUtils,
         query.shouldTestNextSiblings,
@@ -372,7 +397,7 @@ function find(
 
     return DomUtils.find(
         (node: AnyNode) => DomUtils.isTag(node) && query(node),
-        elems,
+        elements,
         true,
         limit,
     ) as Element[];
