@@ -28,11 +28,17 @@ const SCOPE_PSEUDO: Selector = {
     data: null,
 };
 
+/**
+ * Options for cheerio-select queries.
+ */
 export interface Options extends CSSSelectOptions<AnyNode, Element> {
     /** Optional reference to the root of the document. If not set, this will be computed when needed. */
     root?: Document;
 }
 
+/**
+ * Check whether an element matches a selector.
+ */
 export function is(
     element: Element,
     selector: string | ((element_: Element) => boolean),
@@ -41,6 +47,9 @@ export function is(
     return some([element], selector, options);
 }
 
+/**
+ * Check whether at least one element in a list matches a selector.
+ */
 export function some(
     elements: Element[],
     selector: string | ((element: Element) => boolean),
@@ -107,6 +116,9 @@ function filterByPosition(
     }
 }
 
+/**
+ * Filter a list of nodes by selector.
+ */
 export function filter(
     selector: string,
     elements: AnyNode[],
@@ -225,6 +237,9 @@ function filterBySelector(
     );
 }
 
+/**
+ * Select matching elements from a root node or list of nodes.
+ */
 export function select(
     selector: string | ((element: Element) => boolean),
     root: AnyNode | AnyNode[],

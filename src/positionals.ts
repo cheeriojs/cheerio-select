@@ -1,5 +1,8 @@
 import type { PseudoSelector, Selector } from "css-what";
 
+/**
+ * Positional pseudo filters supported by cheerio-select.
+ */
 export type Filter =
     | "first"
     | "last"
@@ -10,6 +13,10 @@ export type Filter =
     | "even"
     | "odd"
     | "not";
+
+/**
+ * Set of positional filter names.
+ */
 export const filterNames: Set<string> = new Set<Filter>([
     "first",
     "last",
@@ -21,11 +28,17 @@ export const filterNames: Set<string> = new Set<Filter>([
     "odd",
 ]);
 
+/**
+ * Pseudo selector with positional filter semantics.
+ */
 export interface CheerioSelector extends PseudoSelector {
     name: Filter;
     data: string | null;
 }
 
+/**
+ * Check whether a selector token is a positional filter.
+ */
 export function isFilter(s: Selector): s is CheerioSelector {
     if (s.type !== "pseudo") return false;
     if (filterNames.has(s.name)) return true;
@@ -37,6 +50,9 @@ export function isFilter(s: Selector): s is CheerioSelector {
     return false;
 }
 
+/**
+ * Calculate the maximum number of elements needed for a positional filter.
+ */
 export function getLimit(
     filter: Filter,
     data: string | null,
