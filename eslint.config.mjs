@@ -19,6 +19,7 @@ export default defineConfig([
         "no-constant-binary-expression": 2,
         "unicorn/no-array-callback-reference": 0,
         "unicorn/no-array-reduce": 0,
+        "unicorn/prefer-query-selector": 0,
     },
   },
   {
@@ -35,7 +36,6 @@ export default defineConfig([
     },
     rules: {
       ...commonTypeScriptRules,
-      "dot-notation": 0,
     },
   },
   eslintConfigBiome

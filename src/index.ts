@@ -44,7 +44,7 @@ export interface Options extends CSSSelectOptions<AnyNode, Element> {
  */
 export function is(
     element: Element,
-    selector: string | ((element_: Element) => boolean),
+    selector: string | ((element: Element) => boolean),
     options: Options = {},
 ): boolean {
     return some([element], selector, options);
@@ -176,7 +176,9 @@ function filterParsed(
     ) {
         const filteredSelector = filteredSelectors[index];
         const missing = found
-            ? elements.filter((element) => DomUtils.isTag(element) && !found!.has(element))
+            ? elements.filter(
+                  (element) => DomUtils.isTag(element) && !found!.has(element),
+              )
             : elements;
 
         if (missing.length === 0) break;

@@ -2,13 +2,21 @@ import type { AnyNode, Element } from "domhandler";
 import * as DomUtils from "domutils";
 import { parseDOM } from "htmlparser2";
 import { filter, type Options, select } from "../src";
-import { createWithFriesXML, loadDoc, q, t } from "./tools/sizzle-testinit";
+import {
+    createWithFriesXML,
+    loadDocument,
+    q,
+    t,
+} from "./tools/sizzle-testinit";
 
-let document = loadDoc();
+let document = loadDocument();
 
-function getDOM(str: string) {
-    return [...parseDOM(str)];
+function getDOM(string_: string) {
+    return [...parseDOM(string_)];
 }
+
+const broken = (selector: string) =>
+    expect(() => select(selector, [])).toThrow(Error);
 
 function matchesSelector(
     element: AnyNode,
@@ -23,7 +31,7 @@ function matchesSelector(
 
 describe("Sizzle", () => {
     beforeEach(() => {
-        document = loadDoc();
+        document = loadDocument();
     });
 
     it("element", () => {
@@ -46,7 +54,7 @@ describe("Sizzle", () => {
         // Select all
         expect(select("*", document).length >= 30).toBe(true);
         const all = select("*", document);
-        const good = all.every((el: AnyNode) => el.nodeType !== 8);
+        const good = all.every((element: AnyNode) => element.nodeType !== 8);
         // Select all elements, no comment nodes
         expect(good).toBe(true);
         // Element Selector
@@ -81,9 +89,9 @@ describe("Sizzle", () => {
         t("dl ol", ["empty", "listWithTabIndex"]);
         // Parent Element (non-space descendant combinator)
         t("dl\tol", ["empty", "listWithTabIndex"]);
-        const obj1 = document.getElementById("object1");
+        const object1 = document.getElementById("object1");
         // Object/param as context
-        expect(select("param", obj1)).toHaveLength(2);
+        expect(select("param", object1)).toHaveLength(2);
 
         // Finding selects with a context.
         t(
@@ -138,13 +146,13 @@ describe("Sizzle", () => {
         // Element-rooted QSA does not select based on document context
         t("div em, div em, div em:not(div em)", [], siblingTest);
         // Escaped commas do not get treated with an id in element-rooted QSA
-        t("div em, em\\,", [], siblingTest);
+        t(String.raw`div em, em\,`, [], siblingTest);
 
         const iframe = document.getElementById("iframe");
         iframe.children = getDOM("<body><p id='foo'>bar</p></body>");
-        iframe.children.forEach((e) => {
-            e.parent = iframe;
-        });
+        for (const element of iframe.children) {
+            element.parent = iframe;
+        }
         // Other document as context
         expect(select("p:contains(bar)", iframe)).toStrictEqual([
             DomUtils.getElementById("foo", iframe.children),
@@ -152,7 +160,7 @@ describe("Sizzle", () => {
         iframe.children = [];
 
         let markup = "";
-        for (let i = 0; i < 100; i++) {
+        for (let index = 0; index < 100; index++) {
             markup = `<div>${markup}</div>`;
         }
         const [html] = getDOM(markup);
@@ -164,10 +172,10 @@ describe("Sizzle", () => {
         DomUtils.removeElement(html);
 
         // Real use case would be using .watch in browsers with window.watch (see Issue #157)
-        const elem = document.createElement("toString");
-        elem.attribs["id"] = "toString";
+        const element = document.createElement("toString");
+        element.attribs["id"] = "toString";
         const siblings = q("qunit-fixture")[0].children;
-        siblings.push(elem);
+        siblings.push(element);
         // Element name matches Object.prototype property
         t("tostring#toString", ["toString"]);
         siblings.pop();
@@ -201,8 +209,10 @@ describe("Sizzle", () => {
         expect(select("meta property thing", xml)).toHaveLength(2);
         // Check for namespaced element
         const xmlOptions = { xmlMode: true };
-        const tag = xml.filter((t) => t.type === "tag").pop() as Element;
-        expect(matchesSelector(tag, "soap\\:Envelope", xmlOptions)).toBe(true);
+        const tag = xml.findLast((t) => t.type === "tag") as Element;
+        expect(
+            matchesSelector(tag, String.raw`soap\:Envelope`, xmlOptions),
+        ).toBe(true);
 
         xml = parseDOM(
             "<?xml version='1.0' encoding='UTF-8'?><root><elem id='1'/></root>",
@@ -214,9 +224,6 @@ describe("Sizzle", () => {
 
     it("broken", () => {
         expect.assertions(25);
-
-        const broken = (selector: string) =>
-            expect(() => select(selector, [])).toThrow(Error);
 
         broken("[");
         broken("(");
@@ -257,11 +264,11 @@ describe("Sizzle", () => {
         broken(":only-last-child");
 
         // Make sure attribute value quoting works correctly. See: #6093
-        parseDOM(
+        for (const node of parseDOM(
             "<input type='hidden' value='2' name='foo.baz' id='attrbad1'/><input type='hidden' value='2' name='foo[baz]' id='attrbad2'/>",
-        ).forEach((node) => {
+        )) {
             DomUtils.appendChild(document.getElementById("form"), node);
-        });
+        }
 
         // Shouldn't be matching those inner brackets
         broken("input[name=foo[baz]]");
@@ -290,26 +297,30 @@ describe("Sizzle", () => {
         t("form > #台北", ["台北"]);
 
         // Escaped ID
-        t("#foo\\:bar", ["foo:bar"]);
+        t(String.raw`#foo\:bar`, ["foo:bar"]);
         // Escaped ID with descendent
-        t("#foo\\:bar span:not(:input)", ["foo_descendent"]);
+        t(String.raw`#foo\:bar span:not(:input)`, ["foo_descendent"]);
         // Escaped ID
-        t("#test\\.foo\\[5\\]bar", ["test.foo[5]bar"]);
+        t(String.raw`#test\.foo\[5\]bar`, ["test.foo[5]bar"]);
         // Descendant escaped ID
-        t("div #foo\\:bar", ["foo:bar"]);
+        t(String.raw`div #foo\:bar`, ["foo:bar"]);
         // Descendant escaped ID
-        t("div #test\\.foo\\[5\\]bar", ["test.foo[5]bar"]);
+        t(String.raw`div #test\.foo\[5\]bar`, ["test.foo[5]bar"]);
         // Child escaped ID
-        t("form > #foo\\:bar", ["foo:bar"]);
+        t(String.raw`form > #foo\:bar`, ["foo:bar"]);
         // Child escaped ID
-        t("form > #test\\.foo\\[5\\]bar", ["test.foo[5]bar"]);
+        t(String.raw`form > #test\.foo\[5\]bar`, ["test.foo[5]bar"]);
 
         const [fiddle] = parseDOM(
-            "<div id='fiddle\\Foo'><span id='fiddleSpan'></span></div>",
+            String.raw`<div id='fiddle\Foo'><span id='fiddleSpan'></span></div>`,
         );
         DomUtils.appendChild(document.getElementById("qunit-fixture"), fiddle);
         // Escaped ID as context
-        t("> span", ["fiddleSpan"], select("#fiddle\\\\Foo", document)[0]);
+        t(
+            "> span",
+            ["fiddleSpan"],
+            select(String.raw`#fiddle\\Foo`, document)[0],
+        );
 
         DomUtils.removeElement(fiddle);
 
@@ -344,11 +355,11 @@ describe("Sizzle", () => {
             ],
         );
 
-        parseDOM("<a id='backslash\\foo'></a>").forEach((node) => {
+        for (const node of parseDOM(String.raw`<a id='backslash\foo'></a>`)) {
             DomUtils.appendChild(document.getElementById("form"), node);
-        });
+        }
         // ID Selector contains backslash
-        t("#backslash\\\\foo", ["backslash\\foo"]);
+        t(String.raw`#backslash\\foo`, [String.raw`backslash\foo`]);
 
         // ID Selector on Form with an input that has a name of 'id'
         t("#lengthtest", ["lengthtest"]);
@@ -365,7 +376,7 @@ describe("Sizzle", () => {
         t("#qunit-fixture", ["qunit-fixture"]);
 
         // ID with weird characters in it
-        t("#name\\+value", ["name+value"]);
+        t(String.raw`#name\+value`, ["name+value"]);
     });
 
     it("class", () => {
@@ -396,25 +407,25 @@ describe("Sizzle", () => {
         t("form > .台北Táiběi", ["utf8class1"]);
 
         // Escaped Class
-        t(".foo\\:bar", ["foo:bar"]);
+        t(String.raw`.foo\:bar`, ["foo:bar"]);
         // Escaped Class
-        t(".test\\.foo\\[5\\]bar", ["test.foo[5]bar"]);
+        t(String.raw`.test\.foo\[5\]bar`, ["test.foo[5]bar"]);
         // Descendant escaped Class
-        t("div .foo\\:bar", ["foo:bar"]);
+        t(String.raw`div .foo\:bar`, ["foo:bar"]);
         // Descendant escaped Class
-        t("div .test\\.foo\\[5\\]bar", ["test.foo[5]bar"]);
+        t(String.raw`div .test\.foo\[5\]bar`, ["test.foo[5]bar"]);
         // Child escaped Class
-        t("form > .foo\\:bar", ["foo:bar"]);
+        t(String.raw`form > .foo\:bar`, ["foo:bar"]);
         // Child escaped Class
-        t("form > .test\\.foo\\[5\\]bar", ["test.foo[5]bar"]);
+        t(String.raw`form > .test\.foo\[5\]bar`, ["test.foo[5]bar"]);
 
         const div = document.createElement("div");
         div.children = parseDOM(
             "<div class='test e'></div><div class='test'></div>",
         );
-        div.children.forEach((e) => {
-            e.parent = div;
-        });
+        for (const element of div.children) {
+            element.parent = div;
+        }
         // Finding a second class.
         expect(select(".e", div)).toStrictEqual([div.children[0]]);
 
@@ -842,7 +853,9 @@ describe("Sizzle", () => {
         // See jQuery #12303
         input.attribs["data-pos"] = ":first";
         // POS within attribute value is treated as an attribute value
-        expect(matchesSelector(input, "input[data-pos=\\:first]")).toBe(true);
+        expect(
+            matchesSelector(input, String.raw`input[data-pos=\:first]`),
+        ).toBe(true);
         // POS within attribute value is treated as an attribute value
         expect(matchesSelector(input, "input[data-pos=':first']")).toBe(true);
         // POS within attribute value after pseudo is treated as an attribute value
@@ -864,43 +877,46 @@ describe("Sizzle", () => {
                 "<input type='hidden' id='attrbad_backslash_backslash' data-attr='&#92;&#92;'/>" +
                 "<input type='hidden' id='attrbad_unicode' data-attr='&#x4e00;'/>",
         ) as Element[];
-        attrbad.forEach((attr) =>
+        for (const attribute of attrbad)
             DomUtils.appendChild(
                 document.getElementById("qunit-fixture"),
-                attr,
-            ),
-        );
+                attribute,
+            );
 
         // Underscores don't need escaping
         t("input[id=types_all]", ["types_all"]);
 
         // Escaped space
-        t("input[name=foo\\ bar]", ["attrbad_space"]);
+        t(String.raw`input[name=foo\ bar]`, ["attrbad_space"]);
         // Escaped dot
-        t("input[name=foo\\.baz]", ["attrbad_dot"]);
+        t(String.raw`input[name=foo\.baz]`, ["attrbad_dot"]);
         // Escaped brackets
-        t("input[name=foo\\[baz\\]]", ["attrbad_brackets"]);
+        t(String.raw`input[name=foo\[baz\]]`, ["attrbad_brackets"]);
 
         // Escaped quote + right bracket
-        t("input[data-attr='foo_baz\\']']", ["attrbad_injection"]);
+        t(String.raw`input[data-attr='foo_baz\']']`, ["attrbad_injection"]);
 
         // Quoted quote
-        t("input[data-attr='\\'']", ["attrbad_quote"]);
+        t(String.raw`input[data-attr='\'']`, ["attrbad_quote"]);
         // Quoted backslash
-        t("input[data-attr='\\\\']", ["attrbad_backslash"]);
+        t(String.raw`input[data-attr='\\']`, ["attrbad_backslash"]);
         // Quoted backslash quote
-        t("input[data-attr='\\\\\\'']", ["attrbad_backslash_quote"]);
+        t(String.raw`input[data-attr='\\\'']`, ["attrbad_backslash_quote"]);
         // Quoted backslash backslash
-        t("input[data-attr='\\\\\\\\']", ["attrbad_backslash_backslash"]);
+        t(String.raw`input[data-attr='\\\\']`, ["attrbad_backslash_backslash"]);
 
         // Quoted backslash backslash (numeric escape)
-        t("input[data-attr='\\5C\\\\']", ["attrbad_backslash_backslash"]);
+        t(String.raw`input[data-attr='\5C\\']`, [
+            "attrbad_backslash_backslash",
+        ]);
         // Quoted backslash backslash (numeric escape with trailing space)
-        t("input[data-attr='\\5C \\\\']", ["attrbad_backslash_backslash"]);
+        t(String.raw`input[data-attr='\5C \\']`, [
+            "attrbad_backslash_backslash",
+        ]);
         // Quoted backslash backslash (numeric escape with trailing tab)
         t("input[data-attr='\\5C\t\\\\']", ["attrbad_backslash_backslash"]);
         // Long numeric escape (BMP)
-        t("input[data-attr='\\04e00']", ["attrbad_unicode"]);
+        t(String.raw`input[data-attr='\04e00']`, ["attrbad_unicode"]);
 
         document.getElementById("attrbad_unicode").attribs["data-attr"] =
             "\uD834\uDF06A";
@@ -908,9 +924,9 @@ describe("Sizzle", () => {
          * It was too much code to fix Safari 5.x Supplemental Plane crashes (see ba5f09fa404379a87370ec905ffa47f8ac40aaa3)
          * Long numeric escape (non-BMP)
          */
-        t("input[data-attr='\\01D306A']", ["attrbad_unicode"]);
+        t(String.raw`input[data-attr='\01D306A']`, ["attrbad_unicode"]);
 
-        attrbad.forEach((attr) => DomUtils.removeElement(attr));
+        for (const attribute of attrbad) DomUtils.removeElement(attribute);
 
         // `input[type=text]`
         t("#form input[type=text]", ["text1", "text2", "hidden2", "name"]);
@@ -924,7 +940,9 @@ describe("Sizzle", () => {
         div.children = getDOM("<div id='foo' xml:test='something'></div>");
 
         // Finding by attribute with escaped characters.
-        expect(select("[xml\\:test]", div)).toStrictEqual([div.children[0]]);
+        expect(select(String.raw`[xml\:test]`, div)).toStrictEqual([
+            div.children[0],
+        ]);
 
         const foo = document.getElementById("foo");
         // Object.prototype property "constructor" (negative)',
@@ -1020,7 +1038,7 @@ describe("Sizzle", () => {
         // No longer second child
         t("p:nth-child(2)", []);
 
-        newNodes.forEach((node) => DomUtils.removeElement(node));
+        for (const node of newNodes) DomUtils.removeElement(node);
 
         // Restored second child
         t("p:nth-child(2)", ["ap", "en"]);
@@ -1360,18 +1378,18 @@ describe("Sizzle", () => {
         // Text Contains
         t("a:contains((Link))", ["groups"]);
 
-        const tmp = document.createElement("div");
-        tmp.attribs["id"] = "tmp_input";
-        document.body.children.push(tmp);
+        const temporary = document.createElement("div");
+        temporary.attribs["id"] = "tmp_input";
+        document.body.children.push(temporary);
 
-        ["button", "submit", "reset"].forEach((type) => {
+        for (const type of ["button", "submit", "reset"]) {
             const els = getDOM(
                 "<input id='input_%' type='%'/><button id='button_%' type='%'>test</button>".replace(
                     /%/g,
                     type,
                 ),
             );
-            els.forEach((el) => DomUtils.appendChild(tmp, el));
+            for (const element of els) DomUtils.appendChild(temporary, element);
 
             // Input Buttons :${type}
             t(`#tmp_input :${type}`, [`input_${type}`, `button_${type}`]);
@@ -1380,7 +1398,7 @@ describe("Sizzle", () => {
             expect(matchesSelector(els[0], `:${type}`)).toBe(true);
             // Button Matches :${type}
             expect(matchesSelector(els[1], `:${type}`)).toBe(true);
-        });
+        }
 
         document.body.children.pop();
 
@@ -1412,7 +1430,7 @@ describe("Sizzle", () => {
         t("p:has(>a.GROUPS[src!=')'])", ["ap"]);
         t("p:has(>a.GROUPS[src!=')'])", ["ap"]);
         // Pseudo followed by token containing ')'
-        t('p:contains(id="foo")[id!=\\)]', ["sndp"]);
+        t(String.raw`p:contains(id="foo")[id!=\)]`, ["sndp"]);
         t("p:contains(id=\"foo\")[id!=')']", ["sndp"]);
 
         // Multi-pseudo
@@ -1773,9 +1791,8 @@ describe("Sizzle", () => {
             '<input id="impliedText"/><input id="capitalText" type="TEXT">',
         );
 
-        extraTexts.forEach((text) =>
-            DomUtils.appendChild(document.getElementById("form"), text),
-        );
+        for (const text of extraTexts)
+            DomUtils.appendChild(document.getElementById("form"), text);
 
         // Form element :input
         t("#form :input", [
@@ -1847,7 +1864,7 @@ describe("Sizzle", () => {
         // Hidden inputs should be treated as enabled. See QSA test.
         t("#hidden1:enabled", ["hidden1"]);
 
-        extraTexts.forEach((text) => DomUtils.removeElement(text));
+        for (const text of extraTexts) DomUtils.removeElement(text);
     });
 
     it("pseudo - :root", () => {
