@@ -1,12 +1,20 @@
-import type { AnyNode } from "domhandler";
 import type { Selector } from "css-what";
+import type { AnyNode } from "domhandler";
 import { isFilter } from "./positionals.js";
 
+/**
+ * Get the document root node for a given node.
+ * @param node Node to inspect.
+ */
 export function getDocumentRoot(node: AnyNode): AnyNode {
     while (node.parent) node = node.parent;
     return node;
 }
 
+/**
+ * Split selectors into plain selectors and selectors using positional filters.
+ * @param selectors Selector groups to split into plain and positional selectors.
+ */
 export function groupSelectors(
     selectors: Selector[][],
 ): [plain: Selector[][], filtered: Selector[][]] {

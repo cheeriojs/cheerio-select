@@ -1,6 +1,6 @@
-import { parseDocument } from "htmlparser2";
-import { select, filter, is, some } from "./";
 import type { Element } from "domhandler";
+import { parseDocument } from "htmlparser2";
+import { filter, is, select, some } from "./";
 
 describe("index", () => {
     it("should find elements", () => {
@@ -10,7 +10,7 @@ describe("index", () => {
 
     it("should find with a function", () => {
         const dom = parseDocument("<div><p>First<p>Second");
-        expect(select((elem) => elem.name === "p", dom)).toHaveLength(2);
+        expect(select((element) => element.name === "p", dom)).toHaveLength(2);
     });
 
     it("should ignore positionals without numbers", () => {
@@ -85,7 +85,7 @@ describe("index", () => {
         expect(is(p2, "div p:first")).toBe(false);
         expect(is(p2, "div p:first, :contains(ond)")).toBe(true);
         expect(is(p1, "div p:last")).toBe(false);
-        expect(is(div, (el) => el.children.length > 1)).toBe(true);
+        expect(is(div, (element) => element.children.length > 1)).toBe(true);
 
         expect(is(p2, "div p:not(:scope)", { context: p1 })).toBe(true);
         expect(is(p1, "div p:not(:scope)", { context: [p1, p2] })).toBe(false);
@@ -101,8 +101,10 @@ describe("index", () => {
         expect(some(ps, "div p:eq(3), p:gt(2)")).toBe(false);
         expect(some(ps, "div p:gt(foo)")).toBe(false);
         expect(some(ps, "div p:eq(3), p:contains(ond)")).toBe(true);
-        expect(some([div], (el) => el.children.length > 1)).toBe(true);
-        expect(some(ps, (el) => el.children.length > 1)).toBe(false);
+        expect(some([div], (element) => element.children.length > 1)).toBe(
+            true,
+        );
+        expect(some(ps, (element) => element.children.length > 1)).toBe(false);
 
         expect(some(ps, "div p:not(:scope)", { context: [ps[1]] })).toBe(true);
         expect(some(ps, "div p:not(:scope)", { context: ps })).toBe(false);

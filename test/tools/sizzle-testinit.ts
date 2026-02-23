@@ -1,9 +1,9 @@
-import { select } from "../../src";
-import fs from "fs";
-import path from "path";
-import * as htmlparser2 from "htmlparser2";
+import { type AnyNode, Element, Text } from "domhandler";
 import * as DomUtils from "domutils";
-import { Text, Element, AnyNode } from "domhandler";
+import fs from "fs";
+import * as htmlparser2 from "htmlparser2";
+import path from "path";
+import { select } from "../../src";
 
 function getDOMFromPath(
     file: string,
@@ -30,21 +30,23 @@ export function getDocument(file: string): SimpleDocument {
     document.createElement = (name: string) =>
         new Element(name.toLocaleLowerCase(), {});
     [document.body] = DomUtils.getElementsByTagName("body", document, true, 1);
-    [document.documentElement] = document.filter(DomUtils.isTag);
+    document.documentElement = document.find(DomUtils.isTag);
 
     return document;
 }
 
-let document = loadDoc();
+let document = loadDocument();
 
-export function loadDoc(): SimpleDocument {
-    return (document = getDocument("sizzle.html"));
+export function loadDocument(): SimpleDocument {
+    document = getDocument("sizzle.html");
+    return document;
 }
 
 /**
  * Returns an array of elements with the given IDs
+ * @param ids Array of IDs to query for
  * @example q("main", "foo", "bar")
- * @result [<div id="main">, <span id="foo">, <input id="bar">]
+ * @returns [<div id="main">, <span id="foo">, <input id="bar">]
  */
 export function q(...ids: string[]): Element[] {
     return ids.map((id) => document.getElementById(id));
@@ -67,16 +69,16 @@ export function t(
         selector,
         context as Element | Element[],
     ) as Element[];
-    const actualIds = actual.map((e) => e.attribs["id"]);
+    const actualIds = actual.map((element) => element.attribs["id"]);
 
     // Should not contain falsy values
     expect(actualIds).toStrictEqual(expectedIds);
 }
 
-const xmlDoc = getDOMFromPath("fries.xml", {
+const xmlDocument = getDOMFromPath("fries.xml", {
     xmlMode: true,
 }) as Element[];
 
 export function createWithFriesXML(): Element[] {
-    return xmlDoc;
+    return xmlDocument;
 }

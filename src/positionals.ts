@@ -1,5 +1,8 @@
-import type { Selector, PseudoSelector } from "css-what";
+import type { PseudoSelector, Selector } from "css-what";
 
+/**
+ * Positional pseudo filters supported by cheerio-select.
+ */
 export type Filter =
     | "first"
     | "last"
@@ -10,6 +13,10 @@ export type Filter =
     | "even"
     | "odd"
     | "not";
+
+/**
+ * Set of positional filter names.
+ */
 export const filterNames: Set<string> = new Set<Filter>([
     "first",
     "last",
@@ -21,11 +28,18 @@ export const filterNames: Set<string> = new Set<Filter>([
     "odd",
 ]);
 
+/**
+ * Pseudo selector with positional filter semantics.
+ */
 export interface CheerioSelector extends PseudoSelector {
     name: Filter;
     data: string | null;
 }
 
+/**
+ * Check whether a selector token is a positional filter.
+ * @param s Selector token to inspect.
+ */
 export function isFilter(s: Selector): s is CheerioSelector {
     if (s.type !== "pseudo") return false;
     if (filterNames.has(s.name)) return true;
@@ -37,33 +51,50 @@ export function isFilter(s: Selector): s is CheerioSelector {
     return false;
 }
 
+/**
+ * Calculate the maximum number of elements needed for a positional filter.
+ * @param filter Positional filter name to evaluate.
+ * @param data Filter argument value from the selector.
+ * @param partLimit Maximum number of elements needed for this selector segment.
+ */
 export function getLimit(
     filter: Filter,
     data: string | null,
     partLimit: number,
 ): number {
-    const num = data != null ? parseInt(data, 10) : NaN;
+    const parsedNumber = data == null ? Number.NaN : Number.parseInt(data, 10);
 
     switch (filter) {
-        case "first":
+        case "first": {
             return 1;
+        }
         case "nth":
-        case "eq":
-            return isFinite(num) ? (num >= 0 ? num + 1 : Infinity) : 0;
-        case "lt":
-            return isFinite(num)
-                ? num >= 0
-                    ? Math.min(num, partLimit)
+        case "eq": {
+            return Number.isFinite(parsedNumber)
+                ? parsedNumber >= 0
+                    ? parsedNumber + 1
                     : Infinity
                 : 0;
-        case "gt":
-            return isFinite(num) ? Infinity : 0;
-        case "odd":
+        }
+        case "lt": {
+            return Number.isFinite(parsedNumber)
+                ? parsedNumber >= 0
+                    ? Math.min(parsedNumber, partLimit)
+                    : Infinity
+                : 0;
+        }
+        case "gt": {
+            return Number.isFinite(parsedNumber) ? Infinity : 0;
+        }
+        case "odd": {
             return 2 * partLimit;
-        case "even":
+        }
+        case "even": {
             return 2 * partLimit - 1;
+        }
         case "last":
-        case "not":
+        case "not": {
             return Infinity;
+        }
     }
 }
