@@ -175,11 +175,14 @@ function filterParsed(
         index++
     ) {
         const filteredSelector = filteredSelectors[index];
-        const missing = found
-            ? elements.filter(
-                  (element) => DomUtils.isTag(element) && !found!.has(element),
-              )
-            : elements;
+        let missing = elements;
+        if (found) {
+            const foundElements = found;
+            missing = elements.filter(
+                (element) =>
+                    DomUtils.isTag(element) && !foundElements.has(element),
+            );
+        }
 
         if (missing.length === 0) break;
         const filtered = filterBySelector(filteredSelector, elements, options);
@@ -187,7 +190,7 @@ function filterParsed(
         if (filtered.length > 0) {
             if (found) {
                 for (const element of filtered) {
-                    found!.add(element);
+                    found.add(element);
                 }
             } else {
                 /*
@@ -286,7 +289,7 @@ export function select(
     }
 
     // Sort results, filtering for duplicates
-    return DomUtils.uniqueSort(results.reduce((a, b) => [...a, ...b]));
+    return DomUtils.uniqueSort(results.flat());
 }
 
 /**

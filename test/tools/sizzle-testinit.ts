@@ -1,8 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
 import { type AnyNode, Element, Text } from "domhandler";
 import * as DomUtils from "domutils";
-import fs from "fs";
 import * as htmlparser2 from "htmlparser2";
-import path from "path";
 import { select } from "../../src";
 
 function getDOMFromPath(

@@ -27,19 +27,8 @@
         "enabled": true,
         "rules": {
             "recommended": true,
-            "complexity": {
-                "useLiteralKeys": "off"
-            },
-            "style": {
-                "noNonNullAssertion": "off",
-                "useNodejsImportProtocol": "off"
-            },
             "suspicious": {
-                "noGlobalIsFinite": "off",
                 "useIterableCallbackReturn": "off"
-            },
-            "performance": {
-                "noAccumulatingSpread": "off"
             }
         }
     },

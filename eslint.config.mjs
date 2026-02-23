@@ -11,6 +11,11 @@ const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 export default defineConfig([
   includeIgnoreFile(gitignorePath),
   {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
+  {
     ignores: ['eslint.config.{js,cjs,mjs}'],
   },
   ...feedicFlatConfig,
@@ -18,7 +23,6 @@ export default defineConfig([
     rules: {
         "no-constant-binary-expression": 2,
         "unicorn/no-array-callback-reference": 0,
-        "unicorn/no-array-reduce": 0,
         "unicorn/prefer-query-selector": 0,
     },
   },
