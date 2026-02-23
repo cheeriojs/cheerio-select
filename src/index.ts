@@ -118,7 +118,7 @@ function filterByPosition(
                 filterParsed(data as Selector[][], elements, options),
             );
 
-            return elements.filter((e) => !filtered.has(e));
+            return elements.filter((element) => !filtered.has(element));
         }
     }
 }
@@ -176,7 +176,7 @@ function filterParsed(
     ) {
         const filteredSelector = filteredSelectors[index];
         const missing = found
-            ? elements.filter((e) => DomUtils.isTag(e) && !found!.has(e))
+            ? elements.filter((element) => DomUtils.isTag(element) && !found!.has(element))
             : elements;
 
         if (missing.length === 0) break;
