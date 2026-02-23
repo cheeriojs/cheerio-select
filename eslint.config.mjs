@@ -19,7 +19,6 @@ export default defineConfig([
         "no-constant-binary-expression": 2,
         "unicorn/no-array-callback-reference": 0,
         "unicorn/no-array-reduce": 0,
-        "unicorn/prefer-number-properties": 0,
         "unicorn/prevent-abbreviations": 0
     },
   },

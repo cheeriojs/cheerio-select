@@ -58,7 +58,7 @@ export function getLimit(
     data: string | null,
     partLimit: number,
 ): number {
-    const number_ = data == null ? Number.NaN : Number.parseInt(data, 10);
+    const parsedNumber = data == null ? Number.NaN : Number.parseInt(data, 10);
 
     switch (filter) {
         case "first": {
@@ -66,21 +66,21 @@ export function getLimit(
         }
         case "nth":
         case "eq": {
-            return isFinite(number_)
-                ? number_ >= 0
-                    ? number_ + 1
+            return Number.isFinite(parsedNumber)
+                ? parsedNumber >= 0
+                    ? parsedNumber + 1
                     : Infinity
                 : 0;
         }
         case "lt": {
-            return isFinite(number_)
-                ? number_ >= 0
-                    ? Math.min(number_, partLimit)
+            return Number.isFinite(parsedNumber)
+                ? parsedNumber >= 0
+                    ? Math.min(parsedNumber, partLimit)
                     : Infinity
                 : 0;
         }
         case "gt": {
-            return isFinite(number_) ? Infinity : 0;
+            return Number.isFinite(parsedNumber) ? Infinity : 0;
         }
         case "odd": {
             return 2 * partLimit;
