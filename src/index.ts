@@ -38,6 +38,9 @@ export interface Options extends CSSSelectOptions<AnyNode, Element> {
 
 /**
  * Check whether an element matches a selector.
+ * @param element Element to evaluate.
+ * @param selector Selector used to match elements.
+ * @param options Options that control this operation.
  */
 export function is(
     element: Element,
@@ -49,6 +52,9 @@ export function is(
 
 /**
  * Check whether at least one element in a list matches a selector.
+ * @param elements Elements to evaluate.
+ * @param selector Selector used to match elements.
+ * @param options Options that control this operation.
  */
 export function some(
     elements: Element[],
@@ -89,7 +95,8 @@ function filterByPosition(
         }
         case "nth":
         case "eq": {
-            return isFinite(number_) && Math.abs(number_) < elements.length
+            return Number.isFinite(number_) &&
+                Math.abs(number_) < elements.length
                 ? [
                       number_ < 0
                           ? elements[elements.length + number_]
@@ -98,7 +105,7 @@ function filterByPosition(
                 : [];
         }
         case "gt": {
-            return isFinite(number_) ? elements.slice(number_ + 1) : [];
+            return Number.isFinite(number_) ? elements.slice(number_ + 1) : [];
         }
         case "even": {
             return elements.filter((_, index) => index % 2 === 0);
@@ -118,6 +125,9 @@ function filterByPosition(
 
 /**
  * Filter a list of nodes by selector.
+ * @param selector Selector used to match elements.
+ * @param elements Elements to evaluate.
+ * @param options Options that control this operation.
  */
 export function filter(
     selector: string,
@@ -131,7 +141,6 @@ export function filter(
  * Filter a set of elements by a selector.
  *
  * Will return elements in the original order.
- *
  * @param selector Selector to filter by.
  * @param elements Elements to filter.
  * @param options Options for selector.
@@ -239,6 +248,10 @@ function filterBySelector(
 
 /**
  * Select matching elements from a root node or list of nodes.
+ * @param selector Selector used to match elements.
+ * @param root Root node or node list to search from.
+ * @param options Options that control this operation.
+ * @param limit Maximum number of results to return.
  */
 export function select(
     selector: string | ((element: Element) => boolean),
@@ -280,6 +293,7 @@ export function select(
  * @param selector Selector to look for.
  * @param options Options for querying.
  * @param queryForSelector Query multiple levels deep for the initial selector, even if it doesn't contain a traversal.
+ * @param totalLimit Overall cap on the number of collected results.
  */
 function findFilterElements(
     root: AnyNode | AnyNode[],

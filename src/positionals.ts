@@ -38,6 +38,7 @@ export interface CheerioSelector extends PseudoSelector {
 
 /**
  * Check whether a selector token is a positional filter.
+ * @param s Selector token to inspect.
  */
 export function isFilter(s: Selector): s is CheerioSelector {
     if (s.type !== "pseudo") return false;
@@ -52,6 +53,9 @@ export function isFilter(s: Selector): s is CheerioSelector {
 
 /**
  * Calculate the maximum number of elements needed for a positional filter.
+ * @param filter Positional filter name to evaluate.
+ * @param data Filter argument value from the selector.
+ * @param partLimit Maximum number of elements needed for this selector segment.
  */
 export function getLimit(
     filter: Filter,

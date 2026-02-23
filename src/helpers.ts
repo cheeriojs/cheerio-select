@@ -4,6 +4,7 @@ import { isFilter } from "./positionals.js";
 
 /**
  * Get the document root node for a given node.
+ * @param node Node to inspect.
  */
 export function getDocumentRoot(node: AnyNode): AnyNode {
     while (node.parent) node = node.parent;
@@ -12,6 +13,7 @@ export function getDocumentRoot(node: AnyNode): AnyNode {
 
 /**
  * Split selectors into plain selectors and selectors using positional filters.
+ * @param selectors Selector groups to split into plain and positional selectors.
  */
 export function groupSelectors(
     selectors: Selector[][],
