@@ -73,18 +73,18 @@ export function getLimit(
             return Number.isFinite(parsedNumber)
                 ? parsedNumber >= 0
                     ? parsedNumber + 1
-                    : Infinity
+                    : Number.POSITIVE_INFINITY
                 : 0;
         }
         case "lt": {
             return Number.isFinite(parsedNumber)
                 ? parsedNumber >= 0
                     ? Math.min(parsedNumber, partLimit)
-                    : Infinity
+                    : Number.POSITIVE_INFINITY
                 : 0;
         }
         case "gt": {
-            return Number.isFinite(parsedNumber) ? Infinity : 0;
+            return Number.isFinite(parsedNumber) ? Number.POSITIVE_INFINITY : 0;
         }
         case "odd": {
             return 2 * partLimit;
@@ -94,7 +94,7 @@ export function getLimit(
         }
         case "last":
         case "not": {
-            return Infinity;
+            return Number.POSITIVE_INFINITY;
         }
     }
 }

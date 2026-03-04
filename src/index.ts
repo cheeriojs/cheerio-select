@@ -262,7 +262,7 @@ export function select(
     selector: string | ((element: Element) => boolean),
     root: AnyNode | AnyNode[],
     options: Options = {},
-    limit = Infinity,
+    limit = Number.POSITIVE_INFINITY,
 ): Element[] {
     if (typeof selector === "function") {
         return find(root, selector);
@@ -312,7 +312,9 @@ function findFilterElements(
     const filter = selector[filterIndex] as CheerioSelector;
     // If we are at the end of the selector, we can limit the number of elements to retrieve.
     const partLimit =
-        selector.length - 1 === filterIndex ? totalLimit : Infinity;
+        selector.length - 1 === filterIndex
+            ? totalLimit
+            : Number.POSITIVE_INFINITY;
 
     /*
      * Set the number of elements to retrieve.
@@ -421,7 +423,7 @@ function findElements(
 function find(
     root: AnyNode | AnyNode[],
     query: CompiledQuery,
-    limit = Infinity,
+    limit = Number.POSITIVE_INFINITY,
 ): Element[] {
     const elements = prepareContext<AnyNode, Element>(
         root,
