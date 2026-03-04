@@ -79,7 +79,7 @@ function filterByPosition(
     data: Selector[][] | string | null,
     options: Options,
 ): Element[] {
-    const number_ =
+    const position =
         typeof data === "string" ? Number.parseInt(data, 10) : Number.NaN;
 
     switch (filter) {
@@ -95,17 +95,19 @@ function filterByPosition(
         }
         case "nth":
         case "eq": {
-            return Number.isFinite(number_) &&
-                Math.abs(number_) < elements.length
+            return Number.isFinite(position) &&
+                Math.abs(position) < elements.length
                 ? [
-                      number_ < 0
-                          ? elements[elements.length + number_]
-                          : elements[number_],
+                      position < 0
+                          ? elements[elements.length + position]
+                          : elements[position],
                   ]
                 : [];
         }
         case "gt": {
-            return Number.isFinite(number_) ? elements.slice(number_ + 1) : [];
+            return Number.isFinite(position)
+                ? elements.slice(position + 1)
+                : [];
         }
         case "even": {
             return elements.filter((_, index) => index % 2 === 0);
@@ -169,11 +171,9 @@ function filterParsed(
         }
     }
 
-    for (
-        let index = 0;
-        index < filteredSelectors.length && found?.size !== elements.length;
-        index++
-    ) {
+    for (let index = 0; index < filteredSelectors.length; index++) {
+        if (found && found.size === 0) break;
+
         const filteredSelector = filteredSelectors[index];
         let missing = elements;
         if (found) {
@@ -227,7 +227,7 @@ function filterBySelector(
          * set to all of our nodes.
          */
         const root = options.root ?? getDocumentRoot(elements[0]);
-        const options_ = {
+        const internalOptions = {
             ...options,
             context: elements,
             relativeSelector: false,
@@ -236,7 +236,7 @@ function filterBySelector(
         return findFilterElements(
             root,
             selector,
-            options_,
+            internalOptions,
             true,
             elements.length,
         );

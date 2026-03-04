@@ -1791,8 +1791,9 @@ describe("Sizzle", () => {
             '<input id="impliedText"/><input id="capitalText" type="TEXT">',
         );
 
-        for (const text of extraTexts)
+        for (const text of extraTexts) {
             DomUtils.appendChild(document.getElementById("form"), text);
+        }
 
         // Form element :input
         t("#form :input", [
