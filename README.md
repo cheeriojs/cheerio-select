@@ -62,6 +62,11 @@ Only use this module if you will actually use jQuery positional selectors in
 your project. If you do not need these specific selectors, it is recommended to
 use the [`css-select`](https://github.com/fb55/css-select) library directly.
 
+## Security contact information
+
+To report a security vulnerability, please use the [Tidelift security contact](https://tidelift.com/security).
+Tidelift will coordinate the fix and disclosure.
+
 ## License
 
 This project is licensed under the BSD-2-Clause license. See the
