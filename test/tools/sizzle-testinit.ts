@@ -1,16 +1,13 @@
 import fs from "node:fs";
-import path from "node:path";
-import { type AnyNode, Element, Text } from "domhandler";
+import { type AnyNode, Element, isTag, Text } from "domhandler";
 import * as DomUtils from "domutils";
-import * as htmlparser2 from "htmlparser2";
-import { select } from "../../src";
+import { type ParserOptions, parseDocument } from "htmlparser2";
+import { expect } from "vitest";
+import { select } from "../../src/index.js";
 
-function getDOMFromPath(
-    file: string,
-    options?: htmlparser2.ParserOptions,
-): AnyNode[] {
-    const filePath = path.join(__dirname, "..", "fixtures", file);
-    return htmlparser2.parseDOM(fs.readFileSync(filePath, "utf8"), options);
+function getDOMFromPath(file: string, options?: ParserOptions): AnyNode[] {
+    const filePath = new URL(`../fixtures/${file}`, import.meta.url);
+    return parseDocument(fs.readFileSync(filePath, "utf8"), options).children;
 }
 
 export interface SimpleDocument extends Array<Element> {
@@ -30,17 +27,21 @@ export function getDocument(file: string): SimpleDocument {
     document.createElement = (name: string) =>
         new Element(name.toLocaleLowerCase(), {});
     [document.body] = DomUtils.getElementsByTagName("body", document, true, 1);
-    document.documentElement = document.find(DomUtils.isTag);
+    const documentElement = document.find(isTag);
+    if (!documentElement) throw new Error("No document element found");
+    document.documentElement = documentElement;
 
     return document;
 }
 
-let document = loadDocument();
+let document: SimpleDocument;
 
 export function loadDocument(): SimpleDocument {
     document = getDocument("sizzle.html");
     return document;
 }
+
+document = loadDocument();
 
 /**
  * Returns an array of elements with the given IDs

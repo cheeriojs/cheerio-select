@@ -1,5 +1,6 @@
 import { parse } from "css-what";
-import { groupSelectors } from "./helpers";
+import { describe, expect, it } from "vitest";
+import { groupSelectors } from "./helpers.js";
 
 describe("helpers", () => {
     describe("groupSelectors", () => {

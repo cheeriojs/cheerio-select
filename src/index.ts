@@ -1,11 +1,11 @@
 import * as boolbase from "boolbase";
 import {
     type Options as CSSSelectOptions,
-    _compileToken as compileToken,
+    _compileUnsafe as compileToken,
     prepareContext,
 } from "css-select";
 import { isTraversal, parse, type Selector, SelectorType } from "css-what";
-import type { AnyNode, Document, Element } from "domhandler";
+import { type AnyNode, type Document, type Element, isTag } from "domhandler";
 import * as DomUtils from "domutils";
 import { getDocumentRoot, groupSelectors } from "./helpers.js";
 import {
@@ -15,8 +15,7 @@ import {
     isFilter,
 } from "./positionals.js";
 
-// Re-export pseudo extension points
-export { aliases, filters, pseudos } from "css-select";
+const adapter = { ...DomUtils, isTag };
 
 const UNIVERSAL_SELECTOR: Selector = {
     type: SelectorType.Universal,
@@ -179,8 +178,7 @@ function filterParsed(
         if (found) {
             const foundElements = found;
             missing = elements.filter(
-                (element) =>
-                    DomUtils.isTag(element) && !foundElements.has(element),
+                (element) => isTag(element) && !foundElements.has(element),
             );
         }
 
@@ -330,9 +328,9 @@ function findFilterElements(
      */
     const elementsNoLimit =
         sub.length === 0 && !Array.isArray(root)
-            ? DomUtils.getChildren(root).filter(DomUtils.isTag)
+            ? DomUtils.getChildren(root).filter(isTag)
             : sub.length === 0
-              ? (Array.isArray(root) ? root : [root]).filter(DomUtils.isTag)
+              ? (Array.isArray(root) ? root : [root]).filter(isTag)
               : queryForSelector || sub.some(isTraversal)
                 ? findElements(root, [sub], options, limit)
                 : filterElements(root, [sub], options);
@@ -357,7 +355,7 @@ function findFilterElements(
                 type === SelectorType.Adjacent
             ) {
                 // If we have a sibling traversal, we need to also look at the siblings.
-                result = prepareContext(result, DomUtils, true) as Element[];
+                result = prepareContext(result, adapter, true) as Element[];
             }
 
             // Avoid a traversal-first selector error.
@@ -427,12 +425,12 @@ function find(
 ): Element[] {
     const elements = prepareContext<AnyNode, Element>(
         root,
-        DomUtils,
+        adapter,
         query.shouldTestNextSiblings,
     );
 
     return DomUtils.find(
-        (node: AnyNode) => DomUtils.isTag(node) && query(node),
+        (node: AnyNode) => isTag(node) && query(node),
         elements,
         true,
         limit,
@@ -444,9 +442,7 @@ function filterElements(
     sel: Selector[][],
     options: Options,
 ): Element[] {
-    const els = (Array.isArray(elements) ? elements : [elements]).filter(
-        DomUtils.isTag,
-    );
+    const els = (Array.isArray(elements) ? elements : [elements]).filter(isTag);
 
     if (els.length === 0) return els;
 

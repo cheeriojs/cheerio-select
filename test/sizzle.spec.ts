@@ -1,18 +1,19 @@
-import type { AnyNode, Element } from "domhandler";
+import { type AnyNode, type Element, isTag } from "domhandler";
 import * as DomUtils from "domutils";
-import { parseDOM } from "htmlparser2";
-import { filter, type Options, select } from "../src";
+import { parseDocument } from "htmlparser2";
+import { beforeEach, describe, expect, it } from "vitest";
+import { filter, type Options, select } from "../src/index.js";
 import {
     createWithFriesXML,
     loadDocument,
     q,
     t,
-} from "./tools/sizzle-testinit";
+} from "./tools/sizzle-testinit.js";
 
 let document = loadDocument();
 
-function getDOM(string_: string) {
-    return [...parseDOM(string_)];
+function getDOM(markup: string) {
+    return [...parseDocument(markup).children];
 }
 
 const broken = (selector: string) =>
@@ -23,10 +24,7 @@ function matchesSelector(
     selector: string,
     options?: Options,
 ): boolean {
-    return (
-        DomUtils.isTag(element) &&
-        filter(selector, [element], options).length === 1
-    );
+    return isTag(element) && filter(selector, [element], options).length === 1;
 }
 
 describe("Sizzle", () => {
@@ -209,15 +207,15 @@ describe("Sizzle", () => {
         expect(select("meta property thing", xml)).toHaveLength(2);
         // Check for namespaced element
         const xmlOptions = { xmlMode: true };
-        const tag = xml.findLast((t) => t.type === "tag") as Element;
+        const tag = xml.findLast((t: Element) => t.type === "tag") as Element;
         expect(
             matchesSelector(tag, String.raw`soap\:Envelope`, xmlOptions),
         ).toBe(true);
 
-        xml = parseDOM(
+        xml = parseDocument(
             "<?xml version='1.0' encoding='UTF-8'?><root><elem id='1'/></root>",
             xmlOptions,
-        ) as Element[];
+        ).children as Element[];
         // Non-qSA path correctly handles numeric ids (jQuery #14142)
         expect(select("elem:not(:has(*))", xml)).toHaveLength(1);
     });
@@ -264,9 +262,9 @@ describe("Sizzle", () => {
         broken(":only-last-child");
 
         // Make sure attribute value quoting works correctly. See: #6093
-        for (const node of parseDOM(
+        for (const node of parseDocument(
             "<input type='hidden' value='2' name='foo.baz' id='attrbad1'/><input type='hidden' value='2' name='foo[baz]' id='attrbad2'/>",
-        )) {
+        ).children) {
             DomUtils.appendChild(document.getElementById("form"), node);
         }
 
@@ -311,9 +309,9 @@ describe("Sizzle", () => {
         // Child escaped ID
         t(String.raw`form > #test\.foo\[5\]bar`, ["test.foo[5]bar"]);
 
-        const [fiddle] = parseDOM(
+        const [fiddle] = parseDocument(
             String.raw`<div id='fiddle\Foo'><span id='fiddleSpan'></span></div>`,
-        );
+        ).children;
         DomUtils.appendChild(document.getElementById("qunit-fixture"), fiddle);
         // Escaped ID as context
         t(
@@ -355,7 +353,8 @@ describe("Sizzle", () => {
             ],
         );
 
-        for (const node of parseDOM(String.raw`<a id='backslash\foo'></a>`)) {
+        for (const node of parseDocument(String.raw`<a id='backslash\foo'></a>`)
+            .children) {
             DomUtils.appendChild(document.getElementById("form"), node);
         }
         // ID Selector contains backslash
@@ -420,9 +419,9 @@ describe("Sizzle", () => {
         t(String.raw`form > .test\.foo\[5\]bar`, ["test.foo[5]bar"]);
 
         const div = document.createElement("div");
-        div.children = parseDOM(
+        div.children = parseDocument(
             "<div class='test e'></div><div class='test'></div>",
-        );
+        ).children;
         for (const element of div.children) {
             element.parent = div;
         }
@@ -450,9 +449,9 @@ describe("Sizzle", () => {
             lastChild,
         ]);
 
-        const [div2] = parseDOM(
+        const [div2] = parseDocument(
             "<div><svg width='200' height='250' version='1.1' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='10' width='30' height='30' class='foo'></rect></svg></div>",
-        ) as Element[];
+        ).children as Element[];
         // Class selector against SVG
         expect(select(".foo", div2)).toHaveLength(1);
     });
@@ -483,9 +482,8 @@ describe("Sizzle", () => {
         // Name selector for grouped form element within the context of another element
         t("input[name='foo[bar]']", ["hidden2"], form1);
 
-        const [form2] = parseDOM(
-            "<form><input name='id'/></form>",
-        ) as Element[];
+        const [form2] = parseDocument("<form><input name='id'/></form>")
+            .children as Element[];
         DomUtils.appendChild(document.body, form2);
 
         // Make sure that rooted queries on forms (with possible expandos) work.

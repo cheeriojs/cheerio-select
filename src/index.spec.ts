@@ -1,6 +1,7 @@
 import type { Element } from "domhandler";
 import { parseDocument } from "htmlparser2";
-import { filter, is, select, some } from "./";
+import { describe, expect, it } from "vitest";
+import { filter, is, select, some } from "./index.js";
 
 describe("index", () => {
     it("should find elements", () => {

@@ -1,5 +1,11 @@
 {
     "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "lib": ["ES2023"],
+        "noEmit": true,
+        "skipLibCheck": true
+    },
     "include": ["src", "test"],
     "exclude": []
 }
