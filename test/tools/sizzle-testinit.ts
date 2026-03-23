@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import path from "node:path";
 import { type AnyNode, Element, isTag, Text } from "domhandler";
 import * as DomUtils from "domutils";
 import { type ParserOptions, parseDocument } from "htmlparser2";
@@ -7,7 +6,7 @@ import { expect } from "vitest";
 import { select } from "../../src/index.js";
 
 function getDOMFromPath(file: string, options?: ParserOptions): AnyNode[] {
-    const filePath = path.join(__dirname, "..", "fixtures", file);
+    const filePath = new URL(`../fixtures/${file}`, import.meta.url);
     return parseDocument(fs.readFileSync(filePath, "utf8"), options).children;
 }
 
@@ -28,7 +27,9 @@ export function getDocument(file: string): SimpleDocument {
     document.createElement = (name: string) =>
         new Element(name.toLocaleLowerCase(), {});
     [document.body] = DomUtils.getElementsByTagName("body", document, true, 1);
-    document.documentElement = document.find(isTag);
+    const documentElement = document.find(isTag);
+    if (!documentElement) throw new Error("No document element found");
+    document.documentElement = documentElement;
 
     return document;
 }

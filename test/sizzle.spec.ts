@@ -8,7 +8,7 @@ import {
     loadDocument,
     q,
     t,
-} from "./tools/sizzle-testinit";
+} from "./tools/sizzle-testinit.js";
 
 let document = loadDocument();
 
@@ -207,7 +207,7 @@ describe("Sizzle", () => {
         expect(select("meta property thing", xml)).toHaveLength(2);
         // Check for namespaced element
         const xmlOptions = { xmlMode: true };
-        const tag = xml.findLast((t) => t.type === "tag") as Element;
+        const tag = xml.findLast((t: Element) => t.type === "tag") as Element;
         expect(
             matchesSelector(tag, String.raw`soap\:Envelope`, xmlOptions),
         ).toBe(true);
