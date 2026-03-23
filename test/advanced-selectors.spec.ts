@@ -1,6 +1,7 @@
 import { innerText } from "domutils";
 import { parseDocument } from "htmlparser2";
-import { select } from "../src";
+import { describe, expect, it } from "vitest";
+import { select } from "../src/index.js";
 
 const testCases: [
     name: string,
