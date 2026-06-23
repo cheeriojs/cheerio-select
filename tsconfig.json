@@ -8,6 +8,9 @@
         "declarationMap": true,
         "sourceMap": true,
         "outDir": "lib",
+        "rootDir": "src",
+        "ignoreDeprecations": "6.0",
+        "types": ["node"],
 
         /* Strict Type-Checking Options */
         "strict": true,
