@@ -49,7 +49,7 @@
         "domutils": "^3.2.2"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.5.2",
+        "@biomejs/biome": "^2.5.3",
         "@eslint/compat": "^2.1.0",
         "@feedic/eslint-config": "^0.2.3",
         "@types/boolbase": "^1.0.3",
