@@ -41,7 +41,7 @@
         "test:jest": "jest"
     },
     "dependencies": {
-        "boolbase": "^1.0.0",
+        "boolbase": "^2.0.0",
         "css-select": "^6.0.0",
         "css-what": "^7.0.0",
         "domelementtype": "^2.3.0",
