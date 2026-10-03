@@ -57,6 +57,26 @@ describe("index", () => {
         expect(select("+.b", a)).toStrictEqual([b]);
     });
 
+    it("should add the next siblings of adjacent elements only once", () => {
+        const dom = parseDocument(`<div>${"<p></p>".repeat(100)}</div>`);
+        const ps = (dom.children[0] as Element).children as Element[];
+        // Count how often the last sibling is looked at.
+        let reads = 0;
+        Object.defineProperty(ps[99], "type", {
+            get() {
+                reads++;
+                return "tag";
+            },
+        });
+
+        expect(select("p:lt(100) ~ p", dom)).toHaveLength(99);
+        expect(reads).toBeLessThan(10);
+
+        reads = 0;
+        expect(select("~ p", ps)).toHaveLength(99);
+        expect(reads).toBeLessThan(10);
+    });
+
     it("should filter elements", () => {
         const dom = parseDocument("<div><p>First<p>Second");
         const ps = select("p", dom);
