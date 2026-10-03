@@ -356,7 +356,9 @@ function findFilterElements(
                 type === SelectorType.Adjacent
             ) {
                 // If we have a sibling traversal, we need to also look at the siblings.
-                result = prepareContext(result, adapter, true) as Element[];
+                result = DomUtils.removeSubsets(
+                    appendNextSiblings(result),
+                ) as Element[];
             }
 
             // Avoid a traversal-first selector error.
@@ -425,9 +427,8 @@ function find(
     limit = Number.POSITIVE_INFINITY,
 ): Element[] {
     const elements = prepareContext<AnyNode, Element>(
-        root,
+        query.shouldTestNextSiblings ? appendNextSiblings(root) : root,
         adapter,
-        query.shouldTestNextSiblings,
     );
 
     return DomUtils.find(
@@ -436,6 +437,33 @@ function find(
         true,
         limit,
     ) as Element[];
+}
+
+/**
+ * Get the passed nodes, followed by their next siblings, visiting each
+ * sibling once.
+ * @param root Node(s) to add the next siblings of.
+ */
+function appendNextSiblings(root: AnyNode | AnyNode[]): AnyNode[] {
+    const nodes = Array.isArray(root) ? root : [root];
+    const result = [...nodes];
+    const seen = nodes.length > 1 ? new Set<AnyNode>() : undefined;
+
+    for (const node of nodes) {
+        // Stop at a node whose next siblings were already added.
+        for (
+            let sibling: AnyNode | null = node;
+            sibling && !seen?.has(sibling);
+            sibling = sibling.next
+        ) {
+            seen?.add(sibling);
+            if (sibling !== node && isTag(sibling)) {
+                result.push(sibling);
+            }
+        }
+    }
+
+    return result;
 }
 
 function filterElements(
