@@ -21,7 +21,7 @@ export interface SimpleDocument extends Array<Element> {
     documentElement: Element;
 }
 
-export function getDocument(file: string): SimpleDocument {
+function getDocument(file: string): SimpleDocument {
     const document = getDOMFromPath(file) as SimpleDocument;
 
     document.getElementById = (id: string) =>
@@ -29,7 +29,7 @@ export function getDocument(file: string): SimpleDocument {
     document.createTextNode = (content: string) => new Text(content);
     document.createElement = (name: string) =>
         new Element(name.toLocaleLowerCase(), {});
-    [document.body] = DomUtils.getElementsByTagName("body", document, true, 1);
+    document.body = DomUtils.getElementsByTagName("body", document, true, 1)[0];
     document.documentElement = document.find(DomUtils.isTag);
 
     return document;
@@ -38,6 +38,7 @@ export function getDocument(file: string): SimpleDocument {
 let document = loadDocument();
 
 export function loadDocument(): SimpleDocument {
+    // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Reset the shared fixture before each test.
     document = getDocument("sizzle.html");
     return document;
 }

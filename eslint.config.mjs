@@ -42,5 +42,20 @@ export default defineConfig([
       ...commonTypeScriptRules,
     },
   },
-  eslintConfigBiome
+  eslintConfigBiome,
+  // Use the Number namespace required by the existing Biome configuration.
+  {
+    files: ["src/index.ts", "src/positionals.ts"],
+    rules: {
+      "unicorn/prefer-global-number-constants": "off",
+    },
+  },
+
+  // These fixtures use domhandler nodes; browser querySelector and firstElementChild APIs do not apply.
+  {
+    files: ["test/advanced-selectors.spec.ts", "test/sizzle.spec.ts"],
+    rules: {
+      "unicorn/better-dom-traversing": "off",
+    },
+  },
 ]);

@@ -42,6 +42,7 @@ export interface Options extends CSSSelectOptions<AnyNode, Element> {
  * @param selector Selector used to match elements.
  * @param options Options that control this operation.
  */
+// eslint-disable-next-line unicorn/consistent-boolean-name -- Preserve the existing exported function name.
 export function is(
     element: Element,
     selector: string | ((element: Element) => boolean),
@@ -56,6 +57,7 @@ export function is(
  * @param selector Selector used to match elements.
  * @param options Options that control this operation.
  */
+// eslint-disable-next-line unicorn/consistent-boolean-name -- Preserve the existing exported function name.
 export function some(
     elements: Element[],
     selector: string | ((element: Element) => boolean),
@@ -80,6 +82,7 @@ function filterByPosition(
     options: Options,
 ): Element[] {
     const position =
+        // eslint-disable-next-line unicorn/prefer-number-coercion -- Preserve integer-prefix parsing of selector arguments.
         typeof data === "string" ? Number.parseInt(data, 10) : Number.NaN;
 
     switch (filter) {
@@ -98,9 +101,10 @@ function filterByPosition(
             return Number.isFinite(position) &&
                 Math.abs(position) < elements.length
                 ? [
-                      position < 0
-                          ? elements[elements.length + position]
-                          : elements[position],
+                      elements[
+                          // eslint-disable-next-line unicorn/no-unsafe-property-key -- The numeric positional index is guarded by finite and bounds checks.
+                          position < 0 ? elements.length + position : position
+                      ],
                   ]
                 : [];
         }
@@ -297,14 +301,14 @@ export function select(
  * @param root Element(s) to search from.
  * @param selector Selector to look for.
  * @param options Options for querying.
- * @param queryForSelector Query multiple levels deep for the initial selector, even if it doesn't contain a traversal.
+ * @param isQueryForSelector Query multiple levels deep for the initial selector, even if it doesn't contain a traversal.
  * @param totalLimit Overall cap on the number of collected results.
  */
 function findFilterElements(
     root: AnyNode | AnyNode[],
     selector: Selector[],
     options: Options,
-    queryForSelector: boolean,
+    isQueryForSelector: boolean,
     totalLimit: number,
 ): Element[] {
     const filterIndex = selector.findIndex(isFilter);
@@ -333,7 +337,7 @@ function findFilterElements(
             ? DomUtils.getChildren(root).filter(DomUtils.isTag)
             : sub.length === 0
               ? (Array.isArray(root) ? root : [root]).filter(DomUtils.isTag)
-              : queryForSelector || sub.some(isTraversal)
+              : isQueryForSelector || sub.some(isTraversal)
                 ? findElements(root, [sub], options, limit)
                 : filterElements(root, [sub], options);
 
@@ -346,9 +350,9 @@ function findFilterElements(
     }
 
     const remainingSelector = selector.slice(filterIndex + 1);
-    const remainingHasTraversal = remainingSelector.some(isTraversal);
+    const isRemainingHasTraversal = remainingSelector.some(isTraversal);
 
-    if (remainingHasTraversal) {
+    if (isRemainingHasTraversal) {
         if (isTraversal(remainingSelector[0])) {
             const { type } = remainingSelector[0];
 
@@ -393,7 +397,7 @@ function findFilterElements(
               false,
               totalLimit,
           )
-        : remainingHasTraversal
+        : isRemainingHasTraversal
           ? // Query existing elements to resolve traversal.
             findElements(result, [remainingSelector], options, totalLimit)
           : // If we don't have any more traversals, simply filter elements.
@@ -411,28 +415,28 @@ function findElements(
     options: Options,
     limit: number,
 ): Element[] {
-    const query: CompiledQuery = compileToken<AnyNode, Element>(
+    const isQuery: CompiledQuery = compileToken<AnyNode, Element>(
         sel,
         options,
         root,
     );
 
-    return find(root, query, limit);
+    return find(root, isQuery, limit);
 }
 
 function find(
     root: AnyNode | AnyNode[],
-    query: CompiledQuery,
+    isQuery: CompiledQuery,
     limit = Number.POSITIVE_INFINITY,
 ): Element[] {
     const elements = prepareContext<AnyNode, Element>(
         root,
         DomUtils,
-        query.shouldTestNextSiblings,
+        isQuery.shouldTestNextSiblings,
     );
 
     return DomUtils.find(
-        (node: AnyNode) => DomUtils.isTag(node) && query(node),
+        (node: AnyNode) => DomUtils.isTag(node) && isQuery(node),
         elements,
         true,
         limit,
