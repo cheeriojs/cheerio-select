@@ -31,7 +31,7 @@ jobs:
             contents: read #  to fetch code (actions/checkout)
             checks: write #  to create new checks (coverallsapp/github-action)
 
-        name: Node ${{ matrix.node }}
+        name: Node ${{ matrix.node == '20.19.0' && '20' || matrix.node }}
         runs-on: ubuntu-latest
 
         strategy:
