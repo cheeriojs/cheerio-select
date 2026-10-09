@@ -350,9 +350,9 @@ function findFilterElements(
     }
 
     const remainingSelector = selector.slice(filterIndex + 1);
-    const isRemainingHasTraversal = remainingSelector.some(isTraversal);
+    const hasRemainingTraversal = remainingSelector.some(isTraversal);
 
-    if (isRemainingHasTraversal) {
+    if (hasRemainingTraversal) {
         if (isTraversal(remainingSelector[0])) {
             const { type } = remainingSelector[0];
 
@@ -397,7 +397,7 @@ function findFilterElements(
               false,
               totalLimit,
           )
-        : isRemainingHasTraversal
+        : hasRemainingTraversal
           ? // Query existing elements to resolve traversal.
             findElements(result, [remainingSelector], options, totalLimit)
           : // If we don't have any more traversals, simply filter elements.

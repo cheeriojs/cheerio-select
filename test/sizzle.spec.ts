@@ -18,7 +18,7 @@ function getDOM(string_: string) {
 const broken = (selector: string) =>
     expect(() => select(selector, [])).toThrow(Error);
 
-function isMatchesSelector(
+function isSelectorMatch(
     element: AnyNode,
     selector: string,
     options?: Options,
@@ -46,7 +46,7 @@ describe("Sizzle", () => {
         ).toStrictEqual([]);
         const form = document.getElementById("form");
         // Empty string passed to matchesSelector does not match
-        expect(isMatchesSelector(form, "")).toBe(false);
+        expect(isSelectorMatch(form, "")).toBe(false);
         // Empty selector returns an empty array
         expect(select(" ", document)).toHaveLength(0);
         // Empty selector returns an empty array
@@ -203,7 +203,7 @@ describe("Sizzle", () => {
         // Attribute selector filter with ID
         expect(
             select("component", xml).filter((node) =>
-                isMatchesSelector(node, "#seite1"),
+                isSelectorMatch(node, "#seite1"),
             ),
         ).toHaveLength(1);
         // Descendent selector and dir caching
@@ -212,7 +212,7 @@ describe("Sizzle", () => {
         const xmlOptions = { xmlMode: true };
         const tag = xml.findLast((t) => t.type === "tag") as Element;
         expect(
-            isMatchesSelector(tag, String.raw`soap\:Envelope`, xmlOptions),
+            isSelectorMatch(tag, String.raw`soap\:Envelope`, xmlOptions),
         ).toBe(true);
 
         xml = parseDOM(
@@ -438,14 +438,14 @@ describe("Sizzle", () => {
         expect(select(".e", div)).toStrictEqual([div.children[0], lastChild]);
 
         // .null does not match an element with no class
-        expect(isMatchesSelector(div, ".null")).toBe(false);
+        expect(isSelectorMatch(div, ".null")).toBe(false);
         // .null does not match an element with no class
-        expect(isMatchesSelector(div.children[0], ".null div")).toBe(false);
+        expect(isSelectorMatch(div.children[0], ".null div")).toBe(false);
         div.attribs["class"] = "null";
         // .null matches element with class 'null'
-        expect(isMatchesSelector(div, ".null")).toBe(true);
+        expect(isSelectorMatch(div, ".null")).toBe(true);
         // Caching system respects DOM changes
-        expect(isMatchesSelector(div.children[0], ".null div")).toBe(true);
+        expect(isSelectorMatch(div.children[0], ".null div")).toBe(true);
         lastChild.attribs["class"] += " hasOwnProperty toString";
         // Classes match Object.prototype properties
         expect(select(".e.hasOwnProperty.toString", div)).toStrictEqual([
@@ -812,20 +812,20 @@ describe("Sizzle", () => {
         opt.attribs["test"] = "";
 
         // Attribute Is Not Equal Matches
-        expect(isMatchesSelector(opt, "[id*=option1][type!=checkbox]")).toBe(
+        expect(isSelectorMatch(opt, "[id*=option1][type!=checkbox]")).toBe(
             true,
         );
         // Attribute With No Quotes Contains Matches
-        expect(isMatchesSelector(opt, "[id*=option1]")).toBe(true);
+        expect(isSelectorMatch(opt, "[id*=option1]")).toBe(true);
         // Attribute With No Quotes No Content Matches
-        expect(isMatchesSelector(opt, "[test=]")).toBe(true);
+        expect(isSelectorMatch(opt, "[test=]")).toBe(true);
         // Attribute with empty string value does not match startsWith selector (^=)
-        expect(isMatchesSelector(opt, "[test^='']")).toBe(false);
+        expect(isSelectorMatch(opt, "[test^='']")).toBe(false);
         // Attribute With No Quotes Equals Matches
-        expect(isMatchesSelector(opt, "[id=option1a]")).toBe(true);
+        expect(isSelectorMatch(opt, "[id=option1a]")).toBe(true);
         // Attribute With No Quotes Href Contains Matches
         expect(
-            isMatchesSelector(document.getElementById("simon1"), "a[href*=#]"),
+            isSelectorMatch(document.getElementById("simon1"), "a[href*=#]"),
         ).toBe(true);
 
         // Empty values
@@ -849,7 +849,7 @@ describe("Sizzle", () => {
         input.attribs["title"] = "Don't click me";
 
         // Quote within attribute value does not mess up tokenizer
-        expect(isMatchesSelector(input, 'input[title="Don\'t click me"]')).toBe(
+        expect(isSelectorMatch(input, 'input[title="Don\'t click me"]')).toBe(
             true,
         );
 
@@ -857,14 +857,12 @@ describe("Sizzle", () => {
         input.attribs["data-pos"] = ":first";
         // POS within attribute value is treated as an attribute value
         expect(
-            isMatchesSelector(input, String.raw`input[data-pos=\:first]`),
+            isSelectorMatch(input, String.raw`input[data-pos=\:first]`),
         ).toBe(true);
         // POS within attribute value is treated as an attribute value
-        expect(isMatchesSelector(input, "input[data-pos=':first']")).toBe(true);
+        expect(isSelectorMatch(input, "input[data-pos=':first']")).toBe(true);
         // POS within attribute value after pseudo is treated as an attribute value
-        expect(isMatchesSelector(input, ":input[data-pos=':first']")).toBe(
-            true,
-        );
+        expect(isSelectorMatch(input, ":input[data-pos=':first']")).toBe(true);
         delete input.attribs["data-pos"];
 
         /*
@@ -1365,7 +1363,7 @@ describe("Sizzle", () => {
 
         const select1 = document.getElementById("select1");
         // Has Option Matches
-        expect(isMatchesSelector(select1, ":has(option)")).toBe(true);
+        expect(isSelectorMatch(select1, ":has(option)")).toBe(true);
 
         // Empty string contains
         expect(select("a:contains('')", document).length).toBeTruthy();
@@ -1397,9 +1395,9 @@ describe("Sizzle", () => {
             t(`#tmp_input :${type}`, [`input_${type}`, `button_${type}`]);
 
             // Input Matches :${type}
-            expect(isMatchesSelector(els[0], `:${type}`)).toBe(true);
+            expect(isSelectorMatch(els[0], `:${type}`)).toBe(true);
             // Button Matches :${type}
-            expect(isMatchesSelector(els[1], `:${type}`)).toBe(true);
+            expect(isSelectorMatch(els[1], `:${type}`)).toBe(true);
         }
 
         document.body.children.pop();
