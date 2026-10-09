@@ -21,7 +21,7 @@ export interface SimpleDocument extends Array<Element> {
     documentElement: Element;
 }
 
-export function getDocument(file: string): SimpleDocument {
+function getDocument(file: string): SimpleDocument {
     const document = getDOMFromPath(file) as SimpleDocument;
 
     document.getElementById = (id: string) =>
