@@ -350,7 +350,7 @@ describe("Sizzle", () => {
         expect(
             (select("div > div #tName1", document)[0] as Element).attribs["id"],
         ).toBe(
-            (select("#tName1-span", document)[0]?.parent as Element).attribs[
+            (select("#tName1-span", document)[0].parent as Element).attribs[
                 "id"
             ],
         );

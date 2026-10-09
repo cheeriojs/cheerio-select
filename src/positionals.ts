@@ -17,7 +17,7 @@ export type Filter =
 /**
  * Set of positional filter names.
  */
-export const filterNames: Set<string> = new Set<Filter>([
+const filterNames: Set<string> = new Set<Filter>([
     "first",
     "last",
     "eq",
