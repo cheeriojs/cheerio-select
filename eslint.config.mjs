@@ -51,9 +51,8 @@ export default defineConfig([
     },
   },
 
-  // These fixtures use domhandler nodes; browser querySelector and firstElementChild APIs do not apply.
+  // This module uses parser DOM nodes, which do not implement browser traversal APIs.
   {
-    files: ["test/advanced-selectors.spec.ts", "test/sizzle.spec.ts"],
     rules: {
       "unicorn/better-dom-traversing": "off",
     },

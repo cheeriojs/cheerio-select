@@ -300,14 +300,14 @@ export function select(
  * @param root Element(s) to search from.
  * @param selector Selector to look for.
  * @param options Options for querying.
- * @param isQueryForSelector Query multiple levels deep for the initial selector, even if it doesn't contain a traversal.
+ * @param shouldQueryForSelector Query multiple levels deep for the initial selector, even if it doesn't contain a traversal.
  * @param totalLimit Overall cap on the number of collected results.
  */
 function findFilterElements(
     root: AnyNode | AnyNode[],
     selector: Selector[],
     options: Options,
-    isQueryForSelector: boolean,
+    shouldQueryForSelector: boolean,
     totalLimit: number,
 ): Element[] {
     const filterIndex = selector.findIndex(isFilter);
@@ -336,7 +336,7 @@ function findFilterElements(
             ? DomUtils.getChildren(root).filter(isTag)
             : sub.length === 0
               ? (Array.isArray(root) ? root : [root]).filter(isTag)
-              : isQueryForSelector || sub.some(isTraversal)
+              : shouldQueryForSelector || sub.some(isTraversal)
                 ? findElements(root, [sub], options, limit)
                 : filterElements(root, [sub], options);
 
