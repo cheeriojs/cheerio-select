@@ -1,0 +1,19 @@
+.github/workflows/nodejs-test.yml
+  s_cdf7d3feeacb5b::t_70817d4b3f2b1d 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "072d64eb8e05d65e22ec8ad5b973ac3e3ee80853",
+  "prompts": {},
+  "sessions": {
+    "s_cdf7d3feeacb5b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12099-9640-7912-a885-2718c69285cc",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Felix Böhm <fb55@users.noreply.github.com>"
+    }
+  }
+}
