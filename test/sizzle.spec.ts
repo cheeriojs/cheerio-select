@@ -18,7 +18,7 @@ function getDOM(string_: string) {
 const broken = (selector: string) =>
     expect(() => select(selector, [])).toThrow(Error);
 
-function matchesSelector(
+function isSelectorMatch(
     element: AnyNode,
     selector: string,
     options?: Options,
@@ -28,6 +28,7 @@ function matchesSelector(
 
 describe("Sizzle", () => {
     beforeEach(() => {
+        // eslint-disable-next-line unicorn/no-top-level-assignment-in-function -- Reset the shared fixture before each test.
         document = loadDocument();
     });
 
@@ -42,7 +43,7 @@ describe("Sizzle", () => {
         ).toStrictEqual([]);
         const form = document.getElementById("form");
         // Empty string passed to matchesSelector does not match
-        expect(matchesSelector(form, "")).toBe(false);
+        expect(isSelectorMatch(form, "")).toBe(false);
         // Empty selector returns an empty array
         expect(select(" ", document)).toHaveLength(0);
         // Empty selector returns an empty array
@@ -51,9 +52,9 @@ describe("Sizzle", () => {
         // Select all
         expect(select("*", document).length >= 30).toBe(true);
         const all = select("*", document);
-        const good = all.every((element: AnyNode) => element.nodeType !== 8);
+        const isGood = all.every((element: AnyNode) => element.nodeType !== 8);
         // Select all elements, no comment nodes
-        expect(good).toBe(true);
+        expect(isGood).toBe(true);
         // Element Selector
         t("html", ["html"]);
         // Element Selector
@@ -199,7 +200,7 @@ describe("Sizzle", () => {
         // Attribute selector filter with ID
         expect(
             select("component", xml).filter((node) =>
-                matchesSelector(node, "#seite1"),
+                isSelectorMatch(node, "#seite1"),
             ),
         ).toHaveLength(1);
         // Descendent selector and dir caching
@@ -208,7 +209,7 @@ describe("Sizzle", () => {
         const xmlOptions = { xmlMode: true };
         const tag = xml.findLast((t) => t.type === "tag") as Element;
         expect(
-            matchesSelector(tag, String.raw`soap\:Envelope`, xmlOptions),
+            isSelectorMatch(tag, String.raw`soap\:Envelope`, xmlOptions),
         ).toBe(true);
 
         xml = parseDocument(
@@ -352,7 +353,8 @@ describe("Sizzle", () => {
             ],
         );
 
-        for (const node of getDOM(String.raw`<a id='backslash\foo'></a>`)) {
+        const backslashNodes = getDOM(String.raw`<a id='backslash\foo'></a>`);
+        for (const node of backslashNodes) {
             DomUtils.appendChild(document.getElementById("form"), node);
         }
         // ID Selector contains backslash
@@ -433,14 +435,14 @@ describe("Sizzle", () => {
         expect(select(".e", div)).toStrictEqual([div.children[0], lastChild]);
 
         // .null does not match an element with no class
-        expect(matchesSelector(div, ".null")).toBe(false);
+        expect(isSelectorMatch(div, ".null")).toBe(false);
         // .null does not match an element with no class
-        expect(matchesSelector(div.children[0], ".null div")).toBe(false);
+        expect(isSelectorMatch(div.children[0], ".null div")).toBe(false);
         div.attribs["class"] = "null";
         // .null matches element with class 'null'
-        expect(matchesSelector(div, ".null")).toBe(true);
+        expect(isSelectorMatch(div, ".null")).toBe(true);
         // Caching system respects DOM changes
-        expect(matchesSelector(div.children[0], ".null div")).toBe(true);
+        expect(isSelectorMatch(div.children[0], ".null div")).toBe(true);
         lastChild.attribs["class"] += " hasOwnProperty toString";
         // Classes match Object.prototype properties
         expect(select(".e.hasOwnProperty.toString", div)).toStrictEqual([
@@ -714,6 +716,7 @@ describe("Sizzle", () => {
         // Attribute Equals
         t("#qunit-fixture a[rel=bookmark]", ["simon1"]);
         // Attribute Equals
+        // eslint-disable-next-line unicorn/prefer-https -- Match the original HTTP fixture exactly.
         t("#qunit-fixture a[href='http://www.google.com/']", ["google"]);
         // Attribute Equals
         t("#qunit-fixture a[ rel = 'bookmark' ]", ["simon1"]);
@@ -805,20 +808,20 @@ describe("Sizzle", () => {
         opt.attribs["test"] = "";
 
         // Attribute Is Not Equal Matches
-        expect(matchesSelector(opt, "[id*=option1][type!=checkbox]")).toBe(
+        expect(isSelectorMatch(opt, "[id*=option1][type!=checkbox]")).toBe(
             true,
         );
         // Attribute With No Quotes Contains Matches
-        expect(matchesSelector(opt, "[id*=option1]")).toBe(true);
+        expect(isSelectorMatch(opt, "[id*=option1]")).toBe(true);
         // Attribute With No Quotes No Content Matches
-        expect(matchesSelector(opt, "[test=]")).toBe(true);
+        expect(isSelectorMatch(opt, "[test=]")).toBe(true);
         // Attribute with empty string value does not match startsWith selector (^=)
-        expect(matchesSelector(opt, "[test^='']")).toBe(false);
+        expect(isSelectorMatch(opt, "[test^='']")).toBe(false);
         // Attribute With No Quotes Equals Matches
-        expect(matchesSelector(opt, "[id=option1a]")).toBe(true);
+        expect(isSelectorMatch(opt, "[id=option1a]")).toBe(true);
         // Attribute With No Quotes Href Contains Matches
         expect(
-            matchesSelector(document.getElementById("simon1"), "a[href*=#]"),
+            isSelectorMatch(document.getElementById("simon1"), "a[href*=#]"),
         ).toBe(true);
 
         // Empty values
@@ -842,7 +845,7 @@ describe("Sizzle", () => {
         input.attribs["title"] = "Don't click me";
 
         // Quote within attribute value does not mess up tokenizer
-        expect(matchesSelector(input, 'input[title="Don\'t click me"]')).toBe(
+        expect(isSelectorMatch(input, 'input[title="Don\'t click me"]')).toBe(
             true,
         );
 
@@ -850,12 +853,12 @@ describe("Sizzle", () => {
         input.attribs["data-pos"] = ":first";
         // POS within attribute value is treated as an attribute value
         expect(
-            matchesSelector(input, String.raw`input[data-pos=\:first]`),
+            isSelectorMatch(input, String.raw`input[data-pos=\:first]`),
         ).toBe(true);
         // POS within attribute value is treated as an attribute value
-        expect(matchesSelector(input, "input[data-pos=':first']")).toBe(true);
+        expect(isSelectorMatch(input, "input[data-pos=':first']")).toBe(true);
         // POS within attribute value after pseudo is treated as an attribute value
-        expect(matchesSelector(input, ":input[data-pos=':first']")).toBe(true);
+        expect(isSelectorMatch(input, ":input[data-pos=':first']")).toBe(true);
         delete input.attribs["data-pos"];
 
         /*
@@ -915,7 +918,7 @@ describe("Sizzle", () => {
         t(String.raw`input[data-attr='\04e00']`, ["attrbad_unicode"]);
 
         document.getElementById("attrbad_unicode").attribs["data-attr"] =
-            "\uD834\uDF06A";
+            "\u{1D306}A";
         /*
          * It was too much code to fix Safari 5.x Supplemental Plane crashes (see ba5f09fa404379a87370ec905ffa47f8ac40aaa3)
          * Long numeric escape (non-BMP)
@@ -1356,7 +1359,7 @@ describe("Sizzle", () => {
 
         const select1 = document.getElementById("select1");
         // Has Option Matches
-        expect(matchesSelector(select1, ":has(option)")).toBe(true);
+        expect(isSelectorMatch(select1, ":has(option)")).toBe(true);
 
         // Empty string contains
         expect(select("a:contains('')", document).length).toBeTruthy();
@@ -1380,10 +1383,7 @@ describe("Sizzle", () => {
 
         for (const type of ["button", "submit", "reset"]) {
             const els = getDOM(
-                "<input id='input_%' type='%'/><button id='button_%' type='%'>test</button>".replace(
-                    /%/g,
-                    type,
-                ),
+                `<input id='input_${type}' type='${type}'/><button id='button_${type}' type='${type}'>test</button>`,
             );
             for (const element of els) DomUtils.appendChild(temporary, element);
 
@@ -1391,9 +1391,9 @@ describe("Sizzle", () => {
             t(`#tmp_input :${type}`, [`input_${type}`, `button_${type}`]);
 
             // Input Matches :${type}
-            expect(matchesSelector(els[0], `:${type}`)).toBe(true);
+            expect(isSelectorMatch(els[0], `:${type}`)).toBe(true);
             // Button Matches :${type}
-            expect(matchesSelector(els[1], `:${type}`)).toBe(true);
+            expect(isSelectorMatch(els[1], `:${type}`)).toBe(true);
         }
 
         document.body.children.pop();

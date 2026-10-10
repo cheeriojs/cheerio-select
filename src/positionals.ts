@@ -62,6 +62,7 @@ export function getLimit(
     data: string | null,
     partLimit: number,
 ): number {
+    // eslint-disable-next-line unicorn/prefer-number-coercion -- Preserve integer-prefix parsing of selector arguments.
     const parsedNumber = data == null ? Number.NaN : Number.parseInt(data, 10);
 
     switch (filter) {
