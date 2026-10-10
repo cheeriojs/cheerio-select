@@ -48,7 +48,7 @@
         "domutils": "^4.0.2"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.5.3",
+        "@biomejs/biome": "^2.5.15",
         "@eslint/compat": "^2.1.1",
         "@feedic/eslint-config": "^0.2.3",
         "@types/jest": "^30.0.0",
