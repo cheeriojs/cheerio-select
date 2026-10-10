@@ -45,7 +45,6 @@ export default defineConfig([
   eslintConfigBiome,
   // Use the Number namespace required by the existing Biome configuration.
   {
-    files: ["src/index.ts", "src/positionals.ts"],
     rules: {
       "unicorn/prefer-global-number-constants": "off",
     },
