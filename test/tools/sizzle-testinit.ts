@@ -1,6 +1,5 @@
 import fs from "node:fs";
-import path from "node:path";
-import { type AnyNode, Element, Text } from "domhandler";
+import { type AnyNode, Element, isTag, Text } from "domhandler";
 import * as DomUtils from "domutils";
 import * as htmlparser2 from "htmlparser2";
 import { select } from "../../src";
@@ -9,8 +8,9 @@ function getDOMFromPath(
     file: string,
     options?: htmlparser2.ParserOptions,
 ): AnyNode[] {
-    const filePath = path.join(__dirname, "..", "fixtures", file);
-    return htmlparser2.parseDOM(fs.readFileSync(filePath, "utf8"), options);
+    const filePath = new URL(`../fixtures/${file}`, import.meta.url);
+    return htmlparser2.parseDocument(fs.readFileSync(filePath, "utf8"), options)
+        .children;
 }
 
 export interface SimpleDocument extends Array<Element> {
@@ -30,12 +30,12 @@ function getDocument(file: string): SimpleDocument {
     document.createElement = (name: string) =>
         new Element(name.toLocaleLowerCase(), {});
     [document.body] = DomUtils.getElementsByTagName("body", document, true, 1);
-    document.documentElement = document.find(DomUtils.isTag);
+    document.documentElement = document.find(isTag) as Element;
 
     return document;
 }
 
-let document = loadDocument();
+let document = getDocument("sizzle.html");
 
 export function loadDocument(): SimpleDocument {
     document = getDocument("sizzle.html");

@@ -6,6 +6,15 @@ updates:
           interval: daily
       open-pull-requests-limit: 10
       versioning-strategy: increase
+      groups:
+          dom-dependencies:
+              patterns:
+                  - boolbase
+                  - css-select
+                  - css-what
+                  - domhandler
+                  - domutils
+                  - htmlparser2
     - package-ecosystem: "github-actions"
       directory: "/"
       schedule:

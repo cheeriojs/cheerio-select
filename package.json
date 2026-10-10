@@ -38,32 +38,31 @@
         "lint:es": "eslint .",
         "prepare": "npm run build",
         "test": "npm run test:jest && npm run lint",
-        "test:jest": "jest"
+        "test:jest": "NODE_OPTIONS=--experimental-vm-modules jest"
     },
     "dependencies": {
-        "boolbase": "^1.0.0",
-        "css-select": "^6.0.0",
-        "css-what": "^7.0.0",
-        "domhandler": "^5.0.3",
-        "domutils": "^3.2.2"
+        "boolbase": "^2.0.0",
+        "css-select": "^7.0.0",
+        "css-what": "^8.0.0",
+        "domhandler": "^6.0.1",
+        "domutils": "^4.0.2"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.5.3",
         "@eslint/compat": "^2.1.0",
         "@feedic/eslint-config": "^0.2.3",
-        "@types/boolbase": "^1.0.3",
         "@types/jest": "^30.0.0",
         "@types/node": "^26.1.0",
         "eslint": "^10.6.0",
         "eslint-config-biome": "^2.1.3",
-        "htmlparser2": "^10.1.0",
+        "htmlparser2": "^12.0.0",
         "jest": "^30.4.2",
         "ts-jest": "^29.4.11",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.63.0"
     },
     "jest": {
-        "preset": "ts-jest",
+        "preset": "ts-jest/presets/default-esm",
         "testEnvironment": "node",
         "coverageProvider": "v8",
         "moduleNameMapper": {
@@ -71,6 +70,24 @@
                 "$1",
                 "$1.js"
             ]
+        },
+        "extensionsToTreatAsEsm": [
+            ".ts"
+        ],
+        "transform": {
+            "^.+\\.tsx?$": [
+                "ts-jest",
+                {
+                    "useESM": true,
+                    "tsconfig": {
+                        "module": "ESNext",
+                        "target": "ES2019"
+                    }
+                }
+            ]
         }
+    },
+    "engines": {
+        "node": ">=20.19.0"
     }
 }
