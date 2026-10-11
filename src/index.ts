@@ -416,27 +416,27 @@ function findElements(
     options: Options,
     limit: number,
 ): Element[] {
-    const isQuery: CompiledQuery = compileToken<AnyNode, Element>(
+    const isMatch: CompiledQuery = compileToken<AnyNode, Element>(
         sel,
         options,
         root,
     );
 
-    return find(root, isQuery, limit);
+    return find(root, isMatch, limit);
 }
 
 function find(
     root: AnyNode | AnyNode[],
-    isQuery: CompiledQuery,
+    isMatch: CompiledQuery,
     limit = Number.POSITIVE_INFINITY,
 ): Element[] {
     const elements = prepareContext<AnyNode, Element>(
-        isQuery.shouldTestNextSiblings ? appendNextSiblings(root) : root,
+        isMatch.shouldTestNextSiblings ? appendNextSiblings(root) : root,
         adapter,
     );
 
     return DomUtils.find(
-        (node: AnyNode) => isTag(node) && isQuery(node),
+        (node: AnyNode) => isTag(node) && isMatch(node),
         elements,
         true,
         limit,
