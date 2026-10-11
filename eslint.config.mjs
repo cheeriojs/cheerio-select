@@ -43,16 +43,11 @@ export default defineConfig([
     },
   },
   eslintConfigBiome,
-  // Use the Number namespace required by the existing Biome configuration.
   {
     rules: {
+      // Use the Number namespace required by the existing Biome configuration.
       "unicorn/prefer-global-number-constants": "off",
-    },
-  },
-
-  // This module uses parser DOM nodes, which do not implement browser traversal APIs.
-  {
-    rules: {
+      // This module uses parser DOM nodes, which do not implement browser traversal APIs.
       "unicorn/better-dom-traversing": "off",
     },
   },
