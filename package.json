@@ -59,7 +59,7 @@
         "htmlparser2": "^12.0.0",
         "jest": "^30.5.2",
         "ts-jest": "^29.4.15",
-        "typescript": "^6.0.2",
+        "typescript": "^7.0.2",
         "typescript-eslint": "^8.72.1"
     },
     "jest": {
